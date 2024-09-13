@@ -1,4 +1,4 @@
-# Project Name 
+# CM4 Scripts
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -10,44 +10,31 @@
 
 <a name="introduction"></a>
 ## Introduction 
-This README details the current features of ProjectName **Version X.X.X**
+This README details the current features of CM4 Scripts **Version 1.1.0**
 
-Briefly describe the purpose of your project...
-
-<a name="features"></a>
-## Features
-List the main features...
+The purpose of this repository is to provide convenience scripts for debugging, setup, and setting time on the CM4.
 
 <a name="installation"></a>
 ## Installation
-Provide step-by-step instructions on how to install/flash your software/firmware...
+Simply clone the repo to the home directory on the CM4.
 
 <a name="usage"></a>
 ## Usage
-Explain how to use your project or describe some relevant information the user should know during operation...
+*For development use only*
 
 <a name="contact"></a>
 ## Contact
 For any questions or feedback, please contact the main developer of this project:
 
-- Name: FirstName LastName
-- Contact Email: your-email@someaddress.com
+- Name: Jean Bezerra
+- Contact Email: jean@overheadintel.com
 
 <a name="changelog"></a>
 ## Changelog
-### Latest Version [1.0.0] - YYYY-MM-DD
-
-#### Added
-- New feature: Describe some feature that was added...
+### Latest Version [1.1.0] - 2024-11-07
 
 #### Changes
-- Modification: Description of what was changed...
-
-#### Fixed
-- Bug fix: Description of bug fix...
-
-#### Known Issues
-- Description of known issue #1...
-- Description of known issue #2...
+- Modified set-datetime.sh script to work as a python script.
+- Changed serial read to be "line-by-line" to prevent data being heald up in buffer.
 
 A history of all changes to this project will be documented in the [CHANGELOG.md](CHANGELOG.md) file.
