@@ -77,6 +77,10 @@ validate_gps_time() {
 
 # Read data from UART device using `cat`
 cat $UART_DEVICE | while read -r line; do
+    
+    #wait a little before the next read
+    sleep 5
+
     # Check if the line starts with "$PINS1"
     if [[ "$line" =~ ^\$PINS1 ]]; then
         echo "Raw Line: $line"  # Print the full line for debugging
