@@ -124,7 +124,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStartPre=/bin/sleep 60
-ExecStart=/home/droneman/shell-scripts/set-datetime.sh
+ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/set-time.py
 RemainAfterExit=false
 Restart=no
 User=root
