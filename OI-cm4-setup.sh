@@ -123,7 +123,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStartPre=/bin/sleep 60
+ExecStartPre=/bin/sleep 15
 ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/set-time.py
 RemainAfterExit=false
 Restart=no
@@ -148,7 +148,7 @@ After=set-datetime.service
 [Service]
 Type=oneshot
 User=root
-ExecStartPre=/bin/sleep 30
+ExecStartPre=/bin/sleep 15
 ExecStart=/home/droneman/photogrammetry/build/main
 
 [Install]
