@@ -12,4 +12,4 @@ sudo qmicli -p -d /dev/cdc-wdm0 --device-open-net='net-raw-ip|net-no-qos-header'
 
 sudo udhcpc -q -f -i wwan0
 
-iptables -t mangle -A PREROUTING -j TTL --ttl-set 65
+sudo iptables -t mangle -A PREROUTING -j TTL --ttl-set 65
