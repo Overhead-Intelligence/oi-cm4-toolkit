@@ -59,7 +59,10 @@ def format_gps_time(gps_week, time_of_week):
 def read_from_uart():
     while(True):
         with serial.Serial(UART_DEVICE, BAUD_RATE, timeout=1) as ser:
-            line = ser.readline().decode('utf-8').strip()
+            try:
+                line = ser.readline().decode('utf-8').strip()
+            except:
+                print("Error decoding line from uart")
 
             if line.startswith("$PINS1"):
                 print(f"Raw Line: {line}")
@@ -79,4 +82,7 @@ def read_from_uart():
             time.sleep(5)  # Wait before the next read
 
 if __name__ == "__main__":
-    read_from_uart()
+    try:
+        read_from_uart()
+    except:
+        print("Error reading from uart")
