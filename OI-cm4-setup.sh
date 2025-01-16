@@ -176,7 +176,7 @@ ExecStart=/usr/bin/python3 /home/droneman/mavlink-mag-forwarder/mavlink-forward.
 [Install]
 WantedBy=multi-user.target
 EOL
-    sudo systemctl enable mavlink-forward.service
+    sudo systemctl disable mavlink-forward.service
 fi
 
 # Stop and disable systemd-timesyncd.service
