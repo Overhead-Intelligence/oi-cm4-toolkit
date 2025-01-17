@@ -4,12 +4,16 @@
 USB_PIN=13
 SHUTTER_PIN=14
 FOCUS_PIN=12
+TRIGGER_PIN=10
+
 USB_MOUNT_PATH="/media/usb/DCIM"
 
 # Initialize gpio pin direction and values
 gpio mode $SHUTTER_PIN out
 gpio mode $FOCUS_PIN out
 gpio mode $USB_PIN out
+gpio mode $TRIGGER_PIN in
+
 gpio write $SHUTTER_PIN 1  
 gpio write $FOCUS_PIN 0
 
@@ -17,7 +21,7 @@ gpio write $FOCUS_PIN 0
 toggle_usb() {
     gpio toggle $USB_PIN
 
-    sleep 0.3  # Allow time for the USB device to connect/disconnect
+    sleep 0.7  # Allow time for the USB device to connect/disconnect
 
     if [ -d "$USB_MOUNT_PATH" ]; then
         echo "USB is connected."
@@ -35,16 +39,33 @@ trigger_shutter() {
         gpio write $FOCUS_PIN 0  # Bring focus pin low
         sleep 0.5
         gpio write $SHUTTER_PIN 0  # Bring shutter pin low
-        sleep 1
+        sleep 1.3
         gpio write $SHUTTER_PIN 1  
         gpio write $FOCUS_PIN 1  
         sleep 1  # Add a delay between shots if needed
     done
 }
 
+# Function for development test mode
+devtest() {
+    echo "Waiting for CUBE photo trigger command..."
+    while true; do
+        if [[ $(gpio read $TRIGGER_PIN) -eq 0 ]]; then
+            echo "GPIO $TRIGGER_PIN triggered, shuttering cam..."
+            trigger_shutter 1
+            # Wait for the GPIO to go HIGH before continuing to avoid multiple triggers
+            while [[ $(gpio read $TRIGGER_PIN) -eq 0 ]]; do
+                sleep 0.1
+            done
+            echo "resetting..."
+        fi
+        sleep 0.1  # Polling interval
+    done
+}
+
 # Main logic to handle command-line arguments
 if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 {usb|shutter [count]}"
+    echo "Usage: $0 {usb|shutter [count]|devtest}"
     exit 1
 fi
 
@@ -64,9 +85,12 @@ case "$1" in
             exit 1
         fi
         ;;
+    devtest)
+        devtest
+        ;;
     *)
         echo "Invalid option: $1"
-        echo "Usage: $0 {usb|shutter [count]}"
+        echo "Usage: $0 {usb|shutter [count]|devtest}"
         exit 1
         ;;
 esac
