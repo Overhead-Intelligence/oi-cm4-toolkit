@@ -37,12 +37,12 @@ trigger_shutter() {
     for ((i = 1; i <= count; i++)); do
         echo "Triggering camera shutter ($i/$count)..."
         gpio write $FOCUS_PIN 0  # Bring focus pin low
-        sleep 0.5
+        sleep 1
         gpio write $SHUTTER_PIN 0  # Bring shutter pin low
-        sleep 1.3
+        sleep 1.5
         gpio write $SHUTTER_PIN 1  
         gpio write $FOCUS_PIN 1  
-        sleep 1  # Add a delay between shots if needed
+        sleep 1.5  # Add a delay between shots if needed
     done
 }
 
