@@ -10,13 +10,13 @@
 
 <a name="introduction"></a>
 ## Introduction 
-This README details the current features of CM4 Scripts **Version 1.1.0**
+This README details the current features of Shell Scripts **Version 1.2.0**
 
-The purpose of this repository is to provide convenience scripts for debugging, setup, and setting time on the CM4.
+The purpose of this repository is to provide convenience scripts for debugging, setup, and setting time on the Raspberry Pi Compute Module.
 
 <a name="installation"></a>
 ## Installation
-Simply clone the repo to the home directory on the CM4.
+Simply clone the repo to the home directory ("/home/droneman/") on the Pi.
 
 <a name="usage"></a>
 ## Usage
@@ -31,10 +31,12 @@ For any questions or feedback, please contact the main developer of this project
 
 <a name="changelog"></a>
 ## Changelog
-### Latest Version [1.1.0] - 2024-11-07
+### Latest Version [1.2.0] - 2025-01-20
 
 #### Changes
-- Modified set-datetime.sh script to work as a python script.
-- Changed serial read to be "line-by-line" to prevent data being heald up in buffer.
+- Renamed "toggle-cam-usb" to "cam-control"
+- Added camera triggering functionality to cam-control.sh
+- Renamed "check-services" to "system-services"
+- Added ability to enable or disable services to system-services.sh
 
 A history of all changes to this project will be documented in the [CHANGELOG.md](CHANGELOG.md) file.
