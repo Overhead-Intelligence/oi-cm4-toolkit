@@ -10,17 +10,17 @@ UDP_PORT = 10004
 
 class MavLinkData:
     def __init__(self):
-        self.armed = None,
-        self.rangefinder_dst = None,
-        self.agl = None,
-        self.battery = None,
-        self.heading = None,
-        self.flight_mode = None,
-        self.wind = None,
-        self.wind_speed = None,
-        self.wind_speed_z = None
+        self.armed = False,
+        self.rangefinder_dst = 0.0,
+        self.agl = 0.0,
+        self.battery = 0.0,
+        self.heading = 0,
+        self.flight_mode = "stabilize",
+        self.wind = 0,
+        self.wind_speed = 0,
+        self.wind_speed_z = 0
     
-    def fill_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind=None, wind_speed = None, wind_speed_z = None):
+    def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind=None, wind_speed = None, wind_speed_z = None):
         """
         Fills data which is present at time mavlink message read.
         
@@ -296,33 +296,26 @@ def main():
         # Execute the specified command
         reader.execute_command(command)
 
-    else:
+    elif command == "stream":
         last_sent_time = time.time() #initialize time variable
+
+        message_types = ['HEARTBEAT', 'TERRAIN_REPORT', 'RANGEFINDER', 'BATTERY_STATUS', 'VFR_HUD', 'WIND'] 
 
         while True:
             # read MAVLink messages
-            msg = reader.mav.recv_msg()
+            msg = reader.mav.recv_match(type=message_types, blocking=True, timeout=0.1)
 
             if msg:
                 current_time = time.time()
-
-                # Check if all data is available and if at least 0.5 seconds has passed since last sent
-                if (current_time - last_sent_time >= 0.0):
-                    # Send data over serial
-                    data.fill_data(
-                        msg
-                        # reader.get_armed_status(), 
-                        # reader.get_rangefinder_distance(), 
-                        # reader.get_agl_altitude(),
-                        # reader.get_battery_remaining(),  
-                        # reader.get_heading(),
-                        # reader.get_flight_mode(), 
-                        # reader.get_wind(),
-                        # reader.get_wind_speed(),
-                        # reader.get_wind_speed_z()
-                    )
+                
+                data.update_data(msg) # Parse mavlink message and extract the data we want
+                
+                # Check if at least 2.5 seconds has passed since we last wrote to file
+                if (current_time - last_sent_time >= 2.5):
                     data.write_to_csv()
-                    last_sent_time = current_time  # Update the last sent time
+                    last_sent_time = current_time  # Update the last write time
+            else:
+                time.sleep(0.05)
 
 
 if __name__ == "__main__":
