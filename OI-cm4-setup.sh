@@ -148,7 +148,7 @@ After=set-datetime.service
 [Service]
 Type=oneshot
 User=root
-ExecStartPre=/bin/sleep 45
+ExecStartPre=/bin/sleep 15
 ExecStart=/home/droneman/photogrammetry/build/main
 
 [Install]
