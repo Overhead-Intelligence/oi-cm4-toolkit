@@ -89,11 +89,12 @@ class MavLinkData:
         }
 
         with open(file_path, mode='w', newline='') as file:
-            fcntl.flock(file, fcntl.LOCK_EX)
+            
+            fcntl.flock(file, fcntl.LOCK_EX) #lock the file before we write to it
             writer = csv.DictWriter(file, fieldnames=data.keys())
             writer.writeheader()
             writer.writerow(data)
-            fcntl.flock(file,fcntl.LOCK_UN)
+            fcntl.flock(file,fcntl.LOCK_UN) #unlock the file
 
 class MavLinkReader:
     """
