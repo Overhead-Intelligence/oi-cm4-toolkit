@@ -64,8 +64,8 @@ else
     git clone https://github.com/WiringPi/WiringPi.git
     cd "$USER_DIR/WiringPi"                    # in WiringPi dir
     ./build debian
-    mv debian-template/wiringpi_3.10_arm64.deb .
-    sudo apt install ./wiringpi_3.10_arm64.deb # install it
+    mv debian-template/wiringpi_3.12_arm64.deb .
+    sudo apt install ./wiringpi_3.12_arm64.deb # install it
 fi
 
 cd "$USER_DIR" 
