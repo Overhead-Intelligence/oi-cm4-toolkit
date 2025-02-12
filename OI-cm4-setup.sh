@@ -83,13 +83,13 @@ fi
 cd "$USER_DIR" 
 
 # Magnetometry setup
-if [ -d "$USER_DIR/mavlink-mag-forwarder" ]; then
-    echo "Mavlink Mag Forwarder repository already exists. Pulling latest updates..."
-    cd "$USER_DIR/mavlink-mag-forwarder"
-    git pull
-else
-    git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
-fi
+# if [ -d "$USER_DIR/mavlink-mag-forwarder" ]; then
+#     echo "Mavlink Mag Forwarder repository already exists. Pulling latest updates..."
+#     cd "$USER_DIR/mavlink-mag-forwarder"
+#     git pull
+# else
+#     git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
+# fi
 
 cd "$USER_DIR" 
 
@@ -157,27 +157,27 @@ EOL
     sudo systemctl enable photogram.service
 fi
 
-if systemctl list-unit-files | grep -q "mavlink-forward.service"; then
-    echo "mavlink-forward.service already exists. Ensuring it is enabled..."
-    sudo systemctl enable mavlink-forward.service
-else
-    echo "Creating mavlink-forward.service..."
-    sudo tee /etc/systemd/system/mavlink-forward.service > /dev/null <<EOL
-[Unit]
-Description=Auto-Start Mavlink to MagComp data stream
-After=photogram.service
+# if systemctl list-unit-files | grep -q "mavlink-forward.service"; then
+#     echo "mavlink-forward.service already exists. Ensuring it is enabled..."
+#     sudo systemctl enable mavlink-forward.service
+# else
+#     echo "Creating mavlink-forward.service..."
+#     sudo tee /etc/systemd/system/mavlink-forward.service > /dev/null <<EOL
+# [Unit]
+# Description=Auto-Start Mavlink to MagComp data stream
+# After=photogram.service
 
-[Service]
-User=droneman
-Type=simple
-ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/python3 /home/droneman/mavlink-mag-forwarder/mavlink-forward.py
+# [Service]
+# User=droneman
+# Type=simple
+# ExecStartPre=/bin/sleep 15
+# ExecStart=/usr/bin/python3 /home/droneman/mavlink-mag-forwarder/mavlink-forward.py
 
-[Install]
-WantedBy=multi-user.target
-EOL
-    sudo systemctl disable mavlink-forward.service
-fi
+# [Install]
+# WantedBy=multi-user.target
+# EOL
+#     sudo systemctl disable mavlink-forward.service
+# fi
 
 # Stop and disable systemd-timesyncd.service
 if systemctl is-enabled systemd-timesyncd.service &>/dev/null; then
@@ -199,6 +199,7 @@ if ! grep -q "dtoverlay=uart0" "$CONFIG_FILE"; then
     echo "dtoverlay=uart3" | sudo tee -a $CONFIG_FILE
     echo "dtoverlay=uart5" | sudo tee -a $CONFIG_FILE
     echo "dtoverlay=disable-bt" | sudo tee -a $CONFIG_FILE
+    echo "dtoverlay=disable-wifi" | sudo tee -a $CONFIG_FILE
 else
     echo "UART and Bluetooth configurations already present in $CONFIG_FILE"
 fi
