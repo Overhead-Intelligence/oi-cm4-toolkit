@@ -64,8 +64,17 @@ else
     git clone https://github.com/WiringPi/WiringPi.git
     cd "$USER_DIR/WiringPi"                    # in WiringPi dir
     ./build debian
-    mv debian-template/wiringpi_3.12_arm64.deb .
-    sudo apt install ./wiringpi_3.12_arm64.deb # install it
+
+    deb_file=$(find debian-template -maxdepth 1 -type f -name "wiringpi_*_arm64.deb" | head -n 1) # Dynamically locate the generated deb file regardless of version.
+    if [ -z "$deb_file" ]; then
+        echo "Error: Could not find the WiringPi deb file in debian-template."
+        exit 1
+    fi
+
+    mv "$deb_file" .
+
+    deb_file_basename=$(basename "$deb_file") # Get the base name of the file (e.g. wiringpi_3.14_arm64.deb).
+    sudo apt install ./"$deb_file_basename" # install it
 fi
 
 cd "$USER_DIR" 
