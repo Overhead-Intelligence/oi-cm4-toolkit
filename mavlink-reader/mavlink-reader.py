@@ -16,11 +16,11 @@ class MavLinkData:
         self.battery = 0.0,
         self.heading = 0,
         self.flight_mode = "stabilize",
-        self.wind = 0,
+        self.wind_dir = 0,
         self.wind_speed = 0,
         self.wind_speed_z = 0
     
-    def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind=None, wind_speed = None, wind_speed_z = None):
+    def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind_dir=None, wind_speed = None, wind_speed_z = None):
         """
         Fills data which is present at time mavlink message read.
         
@@ -41,26 +41,35 @@ class MavLinkData:
         if msg and msg.get_type() == 'HEARTBEAT':
             if msg.type == 1 and msg.autopilot == 3:  # Fixed-wing, ArduPilot
                 armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
-            if msg.custom_mode == 0:
-                flight_mode = "stabilize"
-            elif msg.custom_mode == 3:
-                flight_mode = "auto"
-            elif msg.custom_mode == 4:
-                flight_mode = "guided"
-            elif msg.custom_mode == 5:
-                flight_mode = "loiter"
-            elif msg.custom_mode == 11:
-                flight_mode = "althold"
+                if msg.custom_mode == 0:
+                    flight_mode = "manual"
+                elif msg.custom_mode == 5:
+                    flight_mode = "fbwa"
+                elif msg.custom_mode == 6:
+                    flight_mode = "fbwb"
+                elif msg.custom_mode == 10:
+                    flight_mode = "auto"
+                elif msg.custom_mode == 11:
+                    flight_mode = "rtl"
+                elif msg.custom_mode == 12:
+                    flight_mode = "loiter"
+                elif msg.custom_mode == 15:
+                    flight_mode = "guided"
+                elif msg.custom_mode == 19:
+                    flight_mode = "qloiter"
+                elif msg.custom_mode == 21:
+                    flight_mode = "qrtl"
+    
         elif msg and msg.get_type() == 'RANGEFINDER':
             rangefinder_dst = msg.distance  # Rangefinder in meters
         elif msg and msg.get_type() == 'TERRAIN_REPORT':
-            agl = msg.current_height  # AGL Altitude in meter
+            agl = msg.current_height  # AGL Altitude in meters (height above terrain)
         elif msg and msg.get_type() == 'BATTERY_STATUS':
             battery = (msg.voltages[0]/1000)  # Battery voltage in Volts
         elif msg and msg.get_type() == 'VFR_HUD':
             heading = msg.heading # Heading in degrees
         elif msg and msg.get_type() == 'WIND':
-            wind = msg.direction  # wind
+            wind_dir = msg.direction  # wind_dir
             wind_speed = msg.speed 
             wind_speed_z = msg.speed_z
              
@@ -70,7 +79,7 @@ class MavLinkData:
         self.battery = battery if battery is not None else self.battery
         self.heading = heading if heading is not None else self.heading
         self.flight_mode = flight_mode if flight_mode is not None else self.flight_mode
-        self.wind = wind if wind is not None else self.wind
+        self.wind_dir = wind_dir if wind_dir is not None else self.wind_dir
         self.wind_speed = wind_speed if wind_speed is not None else self.wind_speed
         self.wind_speed_z = wind_speed_z if wind_speed_z is not None else self.wind_speed_z
     
@@ -83,7 +92,7 @@ class MavLinkData:
             'battery': self.battery,
             'heading': self.heading,
             'flight_mode': self.flight_mode,
-            'wind': self.wind,
+            'wind_dir': self.wind_dir,
             'wind_speed': self.wind_speed,
             'wind_speed_z': self.wind_speed_z
         }
@@ -150,7 +159,7 @@ class MavLinkReader:
     
     def get_wind(self):
         """
-        Get the wind direction in degrees
+        Get the wind_dir direction in degrees
 
         Returns:
             float: Wind direction in degrees
@@ -163,7 +172,7 @@ class MavLinkReader:
     
     def get_wind_speed(self):
         """
-        Get the wind speed.
+        Get the wind_dir speed.
 
         Returns:
             float: Windspeed horizontal in meters per second.
@@ -176,7 +185,7 @@ class MavLinkReader:
     
     def get_wind_speed_z(self):
         """
-        Get the vertical wind speed.
+        Get the vertical wind_dir speed.
 
         Returns:
             float: Windspeed vertical in meters per second.
@@ -250,7 +259,7 @@ class MavLinkReader:
             "armed": lambda: self.get_armed_status(),
             "agl": lambda: self.get_agl_altitude(),
             "rangefinder": lambda: self.get_rangefinder_distance(),
-            "wind" : lambda: self.get_wind(),
+            "wind_dir" : lambda: self.get_wind(),
             "battery" : lambda: self.get_battery_remaining(),
             "flight_mode" : lambda: self.get_flight_mode(),
         }
@@ -305,14 +314,16 @@ def main():
         while True:
             # read MAVLink messages
             msg = reader.mav.recv_match(type=message_types, blocking=True, timeout=0.1)
+            #msg = reader.mav.recv_msg()
 
             if msg:
+                #print(msg)
                 current_time = time.time()
                 
                 data.update_data(msg) # Parse mavlink message and extract the data we want
                 
-                # Check if at least 2.5 seconds has passed since we last wrote to file
-                if (current_time - last_sent_time >= 2.5):
+                # Check if at least 1 seconds has passed since we last wrote to file
+                if (current_time - last_sent_time >= 1):
                     data.write_to_csv()
                     last_sent_time = current_time  # Update the last write time
             else:
