@@ -24,7 +24,7 @@ class MavLinkData:
         self.ground_speed = 0.0
         self.air_speed = 0.0
         self.unix_time = 0.0
-        self.mavlink_log_filepath = "/home/droneman/"
+        self.mavlink_log_filepath = None
     
     def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind_dir=None, wind_speed = None, wind_speed_z = None, ground_speed = None, air_speed = None, unix_time = None):
         """
@@ -100,8 +100,6 @@ class MavLinkData:
     
     def write_to_csv(self):
         default_file_path = "/home/droneman/shell-scripts/mavlink-reader/mavlink-data.csv"
-        mission_file_path = os.path.join(self.mavlink_log_filepath, "mavlink-data.csv")
- 
         data = {
             'flight_mode': self.flight_mode,
             'armed': self.armed,
@@ -117,6 +115,7 @@ class MavLinkData:
             'UTC_Date_Time': datetime.utcfromtimestamp(self.unix_time / 1e6).strftime('%Y-%m-%d %H:%M:%S')  # Convert Unix time (in microseconds) to human-readable format (UTC)
         }
 
+        # Always write to this default filepath
         with open(default_file_path, mode='w', newline='') as file:
             fcntl.flock(file, fcntl.LOCK_EX) #lock the file before we write to it
             writer = csv.DictWriter(file, fieldnames=data.keys())
@@ -124,16 +123,20 @@ class MavLinkData:
             writer.writerow(data)
             fcntl.flock(file,fcntl.LOCK_UN) #unlock the file
         
-        def append_row(file_path, data):
-            file_exists = os.path.exists(file_path)
-            mode = 'a' if file_exists else 'w'
-            with open(file_path, mode=mode, newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=data.keys())
-                if not file_exists:
-                    writer.writeheader()
-                writer.writerow(data)
+        # If the user has provided a mission log file path,
+        # then also append the row to that file.
+        if self.mavlink_log_filepath and self.mavlink_log_filepath.strip():
+            mission_file_path = os.path.join(self.mavlink_log_filepath, "mavlink-data.csv")
+            def append_row(file_path, data):
+                file_exists = os.path.exists(file_path)
+                mode = 'a' if file_exists else 'w'
+                with open(file_path, mode=mode, newline='') as file:
+                    writer = csv.DictWriter(file, fieldnames=data.keys())
+                    if not file_exists:
+                        writer.writeheader()
+                    writer.writerow(data)
 
-        append_row(mission_file_path, data)
+            append_row(mission_file_path, data)
 
 class MavLinkReader:
     """
