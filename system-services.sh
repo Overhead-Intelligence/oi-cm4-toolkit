@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the services to check
-SERVICES=("set-datetime" "photogram" "mavlink-forward")
+SERVICES=("set-datetime" "photogram" "quspin-mag" "mavlink-mag-forwarder")
 
 # Function to check the status of services
 check_status() {
