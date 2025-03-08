@@ -248,7 +248,7 @@ TcpServerPort = 5760
 [UartEndpoint flightcontroller]
 # For CM4, change ttyS1 to ttyAMA2
 Device = /dev/ttyAMA2
-Baud = 115200
+Baud = 921600
 [UdpEndpoint doodle]
 Mode = Server
 Address = 0.0.0.0
@@ -259,12 +259,12 @@ Mode = Server
 Address = 0.0.0.0
 Port = 10002
 RetryTimeout = 5
-[UdpEndpoint Rockblock]
+[UdpEndpoint MAVLinkReader]
 Mode = Normal
 Address = 0.0.0.0
 Port = 10003
 RetryTimeout = 5
-[UdpEndpoint MagComp]
+[UdpEndpoint MagForwarder]
 Mode = Normal
 Address = 0.0.0.0
 Port = 10004
