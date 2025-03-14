@@ -24,9 +24,11 @@ class MavLinkData:
         self.ground_speed = 0.0
         self.air_speed = 0.0
         self.unix_time = 0.0
+        self.lat = 0.0
+        self.lon = 0.0
         self.mavlink_log_filepath = None
     
-    def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind_dir=None, wind_speed = None, wind_speed_z = None, ground_speed = None, air_speed = None, unix_time = None):
+    def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind_dir=None, wind_speed = None, wind_speed_z = None, ground_speed = None, air_speed = None, unix_time = None, lat=None, lon=None):
         """
         Fills data which is present at time mavlink message read.
         
@@ -81,9 +83,13 @@ class MavLinkData:
         elif msg and msg.get_type() == 'WIND':
             wind_dir = msg.direction  # wind_dir
             wind_speed = msg.speed 
-            wind_speed_z = msg.speed_z
+            #wind_speed_z = msg.speed_z
         elif msg and msg.get_type() == 'SYSTEM_TIME':
             unix_time = msg.time_unix_usec # unix time in microseconds
+        elif msg and msg.get_type() == 'GLOBAL_POSITION_INT':
+            # lat and lon are sent as integers in 1e7 degrees; convert to float degrees
+            lat = msg.lat / 1e7
+            lon = msg.lon / 1e7
              
         self.armed = armed if armed is not None else self.armed
         self.rangefinder_dst = rangefinder_dst if rangefinder_dst is not None else self.rangefinder_dst
@@ -93,10 +99,12 @@ class MavLinkData:
         self.flight_mode = flight_mode if flight_mode is not None else self.flight_mode
         self.wind_dir = wind_dir if wind_dir is not None else self.wind_dir
         self.wind_speed = wind_speed if wind_speed is not None else self.wind_speed
-        self.wind_speed_z = wind_speed_z if wind_speed_z is not None else self.wind_speed_z
+        #self.wind_speed_z = wind_speed_z if wind_speed_z is not None else self.wind_speed_z
         self.ground_speed = ground_speed if ground_speed is not None else self.ground_speed
         self.air_speed = air_speed if air_speed is not None else self.air_speed
         self.unix_time = unix_time if unix_time is not None else self.unix_time
+        self.lat = lat if lat is not None else self.lat
+        self.lon = lon if lon is not None else self.lon
     
     def write_to_csv(self):
         default_file_path = "/home/droneman/shell-scripts/mavlink-reader/mavlink-data.csv"
@@ -111,7 +119,9 @@ class MavLinkData:
             'air_speed' : self.air_speed,
             'wind_dir': self.wind_dir,
             'wind_speed': self.wind_speed,
-            'UTC_Date_Time': datetime.fromtimestamp(self.unix_time / 1e6, timezone.utc).strftime('%Y-%m-%d %H:%M:%S')  # Convert Unix time (in microseconds) to human-readable format (UTC)
+            'UTC_Date_Time': datetime.fromtimestamp(self.unix_time / 1e6, timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),  # Convert Unix time (in microseconds) to human-readable format (UTC)
+            'lat': self.lat,
+            'lon': self.lon,
         }
 
         # Always write to this default filepath
@@ -298,7 +308,7 @@ def main():
     elif command == "stream":
         last_sent_time = time.time() #initialize time variable
 
-        message_types = ['HEARTBEAT', 'TERRAIN_REPORT', 'RANGEFINDER', 'BATTERY_STATUS', 'VFR_HUD', 'WIND', 'SYSTEM_TIME'] 
+        message_types = ['HEARTBEAT', 'TERRAIN_REPORT', 'RANGEFINDER', 'BATTERY_STATUS', 'VFR_HUD', 'WIND', 'SYSTEM_TIME', 'GLOBAL_POSITION_INT'] 
 
         while True:
             # read MAVLink messages
