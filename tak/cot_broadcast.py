@@ -8,10 +8,10 @@ import subprocess
 # Configuration parameters:
 BROADCAST_IP = "255.255.255.255"  # Update this to your network's broadcast address
 PORT = 6969                   # Port that ATAK is listening on for CoT messages
-CSV_FILE = "/home/droneman/shell-scripts/mavlink-reader/mavlink-data.csv"
+CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
 
 # Launch the mavlink-reader.py script
-mavlink_reader_script = "/home/droneman/shell-scripts/mavlink-reader/mavlink-reader.py"
+mavlink_reader_script = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-reader.py"
 subprocess.Popen(["python3", mavlink_reader_script, "stream"])
 
 def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goose", type="a-f-A-C-F"):
@@ -82,7 +82,7 @@ def main():
         while True:
             lat, lon, alt = read_csv_values() # Update location values from the CSV file
 
-            message = create_cot_message(lat, lon, alt, uid=uid, callsign=hostname)
+            message = create_cot_message(lat, lon, alt, uid=uid, callsign=hostname, type="a-f-G-U-V-W")
             
             try:
                 sock.sendto(message.encode('utf-8'), (BROADCAST_IP, PORT)) # Send the message via UDP broadcast
