@@ -107,7 +107,7 @@ class MavLinkData:
         self.lon = lon if lon is not None else self.lon
     
     def write_to_csv(self):
-        default_file_path = "/home/droneman/shell-scripts/mavlink-reader/mavlink-data.csv"
+        default_file_path = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
         data = {
             'flight_mode': self.flight_mode,
             'armed': self.armed,
