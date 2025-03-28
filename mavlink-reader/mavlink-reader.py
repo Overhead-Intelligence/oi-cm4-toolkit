@@ -3,7 +3,7 @@ from pymavlink import mavutil
 import time
 import csv
 import fcntl
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Constants
@@ -112,7 +112,7 @@ class MavLinkData:
             'wind_dir': self.wind_dir,
             'wind_speed': self.wind_speed,
             #'wind_speed_z': self.wind_speed_z,
-            'UTC_Date_Time': datetime.utcfromtimestamp(self.unix_time / 1e6).strftime('%Y-%m-%d %H:%M:%S')  # Convert Unix time (in microseconds) to human-readable format (UTC)
+            'UTC_Date_Time': datetime.fromtimestamp(self.unix_time / 1e6, timezone.utc).strftime('%Y-%m-%d %H:%M:%S')  # Convert Unix time (in microseconds) to human-readable format (UTC)
         }
 
         # Always write to this default filepath
