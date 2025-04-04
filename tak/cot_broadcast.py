@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 BROADCAST_IP = "255.255.255.255"  # Update this to your network's broadcast address
 PORT = 6969                   # Port that ATAK is listening on for CoT messages
 
-def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Chadeous_maximus"):
+def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goose"):
     """
     Generate a simple CoT XML message with current time and provided location.
     

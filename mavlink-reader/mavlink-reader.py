@@ -111,7 +111,6 @@ class MavLinkData:
             'air_speed' : self.air_speed,
             'wind_dir': self.wind_dir,
             'wind_speed': self.wind_speed,
-            #'wind_speed_z': self.wind_speed_z,
             'UTC_Date_Time': datetime.fromtimestamp(self.unix_time / 1e6, timezone.utc).strftime('%Y-%m-%d %H:%M:%S')  # Convert Unix time (in microseconds) to human-readable format (UTC)
         }
 
@@ -190,45 +189,6 @@ class MavLinkReader:
                 return msg.distance  # Rangefinder in meters
             time.sleep(0.1)
     
-    def get_wind(self):
-        """
-        Get the wind_dir direction in degrees
-
-        Returns:
-            float: Wind direction in degrees
-        """
-        while True:
-            msg = self.mav.recv_msg()
-            if msg and msg.get_type() == 'WIND':
-                return msg.direction  # Rangefinder in meters
-            time.sleep(0.1)
-    
-    def get_wind_speed(self):
-        """
-        Get the wind_dir speed.
-
-        Returns:
-            float: Windspeed horizontal in meters per second.
-        """
-        while True:
-            msg = self.mav.recv_msg()
-            if msg and msg.get_type() == 'WIND':
-                return msg.speed
-            time.sleep(0.1)
-    
-    def get_wind_speed_z(self):
-        """
-        Get the vertical wind_dir speed.
-
-        Returns:
-            float: Windspeed vertical in meters per second.
-        """
-        while True:
-            msg = self.mav.recv_msg()
-            if msg and msg.get_type() == 'WIND':
-                return msg.speed_z 
-            time.sleep(0.1)
-
     def get_battery_remaining(self):
         """
         Get the battery remaining value.
@@ -240,19 +200,6 @@ class MavLinkReader:
             msg = self.mav.recv_msg()
             if msg and msg.get_type() == 'BATTERY_STATUS':
                 return (msg.voltages[0]/1000)  # Rangefinder in meters
-            time.sleep(0.1)
-
-    def get_heading(self):
-        """
-        Get the current heading in degrees.
-
-        Returns:
-            int: Current heading in degrees.
-        """
-        while True:
-            msg = self.mav.recv_msg()
-            if msg and msg.get_type() == 'VFR_HUD':
-                return msg.heading  # Rangefinder in meters
             time.sleep(0.1)
 
     def get_flight_mode(self):
