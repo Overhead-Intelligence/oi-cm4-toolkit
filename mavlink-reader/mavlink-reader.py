@@ -8,7 +8,7 @@ import os
 
 # Constants
 UDP_IP = "127.0.0.1"
-UDP_PORT = 10004
+UDP_PORT = 10003
 
 class MavLinkData:
     def __init__(self):
