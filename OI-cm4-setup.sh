@@ -42,7 +42,7 @@ for program in "${PROGRAMS[@]}"; do
         
         # python setup
         echo "Checking for Python external management removal..."
-        if [ -f /usr/lib/python3.11/EXTERNALLY-MANAGED.old ]; then
+        if [ -f /usr/lib/python3.11/EXTERNALLY-MANAGED.old ]; then           #python 3.11 for raspian OS, 3.12 for ubuntu
             echo "Python external management already disabled. Skipping..."
         else
             echo "Removing requirement for Python virtual environment..."
@@ -80,14 +80,14 @@ fi
 cd "$USER_DIR" 
 
 # Photogrammetry setup
-if [ -d "$USER_DIR/photogrammetry" ]; then
-    echo "Photogrammetry repository already exists. Pulling latest updates..."
-    cd "$USER_DIR/photogrammetry"
-    git pull
-else
-    git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
-    mkdir "$USER_DIR/photogrammetry/logs"
-fi
+# if [ -d "$USER_DIR/photogrammetry" ]; then
+#     echo "Photogrammetry repository already exists. Pulling latest updates..."
+#     cd "$USER_DIR/photogrammetry"
+#     git pull
+# else
+#     git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
+#     mkdir "$USER_DIR/photogrammetry/logs"
+# fi
 
 cd "$USER_DIR" 
 
@@ -144,27 +144,49 @@ EOL
     sudo systemctl enable set-datetime.service
 fi
 
-if systemctl list-unit-files | grep -q "photogram.service"; then
-    echo "photogram.service already exists. Ensuring it is enabled..."
-    sudo systemctl enable photogram.service
+if systemctl list-unit-files | grep -q "cot-broadcast.service"; then
+    echo "cot-broadcast.service already exists. Ensuring it is enabled..."
+    sudo systemctl enable cot-broadcast.service
 else
-    echo "Creating photogram.service..."
-    sudo tee /etc/systemd/system/photogram.service > /dev/null <<EOL
+    echo "Creating cot-broadcast.service..."
+    sudo tee /etc/systemd/system/cot-broadcast.service > /dev/null <<EOL
 [Unit]
-Description=Photogrammetry Auto-Start Service
+Description=CoT Data Broadcaster Auto-Start Service
 After=set-datetime.service
 
 [Service]
 Type=oneshot
 User=root
 ExecStartPre=/bin/sleep 15
-ExecStart=/home/droneman/photogrammetry/build/main
+ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/tak/cot_broadcast.py
 
 [Install]
 WantedBy=multi-user.target
 EOL
-    sudo systemctl enable photogram.service
+    sudo systemctl enable cot-broadcast.service
 fi
+
+# if systemctl list-unit-files | grep -q "photogram.service"; then
+#     echo "photogram.service already exists. Ensuring it is enabled..."
+#     sudo systemctl enable photogram.service
+# else
+#     echo "Creating photogram.service..."
+#     sudo tee /etc/systemd/system/photogram.service > /dev/null <<EOL
+# [Unit]
+# Description=Photogrammetry Auto-Start Service
+# After=set-datetime.service
+
+# [Service]
+# Type=oneshot
+# User=root
+# ExecStartPre=/bin/sleep 15
+# ExecStart=/home/droneman/photogrammetry/build/main
+
+# [Install]
+# WantedBy=multi-user.target
+# EOL
+#     sudo systemctl enable photogram.service
+# fi
 
 # if systemctl list-unit-files | grep -q "mavlink-forward.service"; then
 #     echo "mavlink-forward.service already exists. Ensuring it is enabled..."

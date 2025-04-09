@@ -3,13 +3,18 @@ import socket
 import time
 import csv
 from datetime import datetime, timedelta, timezone
+import subprocess
 
 # Configuration parameters:
 BROADCAST_IP = "255.255.255.255"  # Update this to your network's broadcast address
 PORT = 6969                   # Port that ATAK is listening on for CoT messages
 CSV_FILE = "/home/droneman/shell-scripts/mavlink-reader/mavlink-data.csv"
 
-def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goose"):
+# Launch the mavlink-reader.py script
+mavlink_reader_script = "/home/droneman/shell-scripts/mavlink-reader/mavlink-reader.py"
+subprocess.Popen(["python3", mavlink_reader_script, "stream"])
+
+def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goose", type="a-f-A-C-F"):
     """
     Generate a simple CoT XML message with current time and provided location.
     
@@ -29,7 +34,7 @@ def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goos
     stale_str = (now + timedelta(minutes=5)).isoformat() + "Z"
     
     cot_message = f"""<?xml version="1.0" encoding="UTF-8"?>
-<event version="2.0" uid="{uid}" type="a-f-A-C-F" how="m-g" time="{time_str}" start="{start_str}" stale="{stale_str}">
+<event version="2.0" uid="{uid}" type="{type}" how="m-g" time="{time_str}" start="{start_str}" stale="{stale_str}">
     <point lat="{lat}" lon="{lon}" hae="{altitude}" ce="9999.0" le="9999.0"/>
     <detail>
         <contact callsign="{callsign}"/>
