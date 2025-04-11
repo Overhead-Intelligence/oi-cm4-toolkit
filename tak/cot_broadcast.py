@@ -84,7 +84,12 @@ def main():
 
             message = create_cot_message(lat, lon, alt, uid=uid, callsign=hostname)
             
-            sock.sendto(message.encode('utf-8'), (BROADCAST_IP, PORT)) # Send the message via UDP broadcast
+            try:
+                sock.sendto(message.encode('utf-8'), (BROADCAST_IP, PORT)) # Send the message via UDP broadcast
+            except:
+                print(f"Error sending message: {e}")
+                continue
+
             #print("Broadcasted CoT message:")
             #print(message)
             #print("-" * 50)
