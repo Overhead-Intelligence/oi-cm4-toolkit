@@ -196,7 +196,7 @@ fi
 #     sudo tee /etc/systemd/system/mavlink-forward.service > /dev/null <<EOL
 # [Unit]
 # Description=Auto-Start Mavlink to MagComp data stream
-# After=photogram.service
+# After=set-datetime.service
 
 # [Service]
 # User=droneman
