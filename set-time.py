@@ -57,7 +57,19 @@ def format_gps_time(gps_week, time_of_week):
 
 # Read data from the UART device
 def read_from_uart():
+
+    start_time = time.time()
+    received_valid_data = False
+    
     while(True):
+        
+        # If no valid serial data has been received in 15 seconds, use the network command to set date/time
+        if time.time() - start_time >= 15 and not received_valid_data:
+            print("No serial data received within 15 seconds, setting system time from network")
+            cmd = 'sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d\' \' -f5-8)Z"'
+            subprocess.run(cmd, shell=True)
+            exit(0)
+
         with serial.Serial(UART_DEVICE, BAUD_RATE, timeout=1) as ser:
             try:
                 line = ser.readline().decode('utf-8').strip()
@@ -65,6 +77,7 @@ def read_from_uart():
                 print("Error decoding line from uart")
 
             if line.startswith("$PINS1"):
+                received_valid_data = True
                 print(f"Raw Line: {line}")
                 tokens = line.split(',')
 
