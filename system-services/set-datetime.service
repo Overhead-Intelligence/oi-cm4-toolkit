@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/system-services/set-time.py
+ExecStart=/usr/bin/python3 /home/droneman/oi-cm4-toolkit/system-services/set-time.py
 RemainAfterExit=false
 Restart=no
 User=root
