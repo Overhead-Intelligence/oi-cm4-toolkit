@@ -53,6 +53,8 @@ for program in "${PROGRAMS[@]}"; do
     fi
 done
 
+# Install mavlink interfacing dependencies
+sudo pip3 install pymavlink pyserial
 
 # make sure we are in the correct directory
 cd "$USER_DIR"
