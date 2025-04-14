@@ -1,0 +1,12 @@
+[Unit]
+Description=Auto-Start Mavlink to MagComp data stream
+After=set-datetime.service
+
+[Service]
+User=droneman
+Type=simple
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/python3 /home/droneman/mavlink-mag-forwarder/mavlink-forward.py
+
+[Install]
+WantedBy=multi-user.target

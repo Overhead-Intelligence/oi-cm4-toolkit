@@ -1,0 +1,14 @@
+[Unit]
+Description=Set System Time from GPS Data
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/system-services/set-time.py
+RemainAfterExit=false
+Restart=no
+User=root
+
+[Install]
+WantedBy=multi-user.target

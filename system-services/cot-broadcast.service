@@ -1,0 +1,12 @@
+[Unit]
+Description=CoT Data Broadcaster Auto-Start Service
+# After=set-datetime.service # may not need this line
+
+[Service]
+Type=oneshot
+User=root
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/tak/cot_broadcast.py
+
+[Install]
+WantedBy=multi-user.target
