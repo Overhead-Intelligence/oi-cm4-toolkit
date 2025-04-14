@@ -188,6 +188,15 @@ fi
 if [ "$INSTALL_TIME" = true]; then
     sudo systemctl link /home/droneman/shell-scripts/system-services/set-datetime.service
     sudo systemctl enable set-datetime.service
+
+    # Stop and disable systemd-timesyncd.service
+    if systemctl is-enabled systemd-timesyncd.service &>/dev/null; then
+        echo "Stopping and disabling systemd-timesyncd.service..."
+        sudo systemctl stop systemd-timesyncd.service
+        sudo systemctl disable systemd-timesyncd.service
+    else
+        echo "systemd-timesyncd.service is already disabled. Skipping..."
+    fi
 fi
 
 # mavlink router setup
@@ -203,15 +212,6 @@ else
 fi
 
 cd "$USER_DIR"
-
-# Stop and disable systemd-timesyncd.service
-if systemctl is-enabled systemd-timesyncd.service &>/dev/null; then
-    echo "Stopping and disabling systemd-timesyncd.service..."
-    sudo systemctl stop systemd-timesyncd.service
-    sudo systemctl disable systemd-timesyncd.service
-else
-    echo "systemd-timesyncd.service is already disabled. Skipping..."
-fi
 
 # Modify /boot/firmware/config.txt to enable UARTs and disable Bluetooth
 echo "Configuring /boot/firmware/config.txt..."
