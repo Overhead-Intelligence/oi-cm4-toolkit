@@ -1,5 +1,41 @@
 #!/bin/bash
 
+# Parse command line arguments for optional installations
+INSTALL_PHOTO=false
+INSTALL_MAG=false
+INSTALL_LIDAR=false
+INSTALL_COT=false
+INSTALL_QSPIN=false
+INSTALL_TIME=false
+
+for arg in "$@"; do
+    case $arg in
+        photo)
+            INSTALL_PHOTO=true
+            ;;
+        mag)
+            INSTALL_MAG=true
+            ;;
+        lidar)
+            INSTALL_LIDAR=true
+            ;;
+        cot)
+            INSTALL_COT=true
+            ;;
+        quspin)
+            INSTALL_QSPIN=true
+            ;;    
+        time)
+            INSTALL_TIME=true
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            echo "Known arguments: photo, mag, lidar, cot, quspin, time."
+            exit 1
+            ;;
+    esac
+done
+
 # home directory
 USER_DIR="/home/droneman"
 
@@ -53,6 +89,8 @@ for program in "${PROGRAMS[@]}"; do
     fi
 done
 
+# Install mavlink interfacing dependencies
+sudo pip3 install pymavlink pyserial
 
 # make sure we are in the correct directory
 cd "$USER_DIR"
@@ -80,27 +118,77 @@ fi
 cd "$USER_DIR" 
 
 # Photogrammetry setup
-# if [ -d "$USER_DIR/photogrammetry" ]; then
-#     echo "Photogrammetry repository already exists. Pulling latest updates..."
-#     cd "$USER_DIR/photogrammetry"
-#     git pull
-# else
-#     git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
-#     mkdir "$USER_DIR/photogrammetry/logs"
-# fi
+if [ "$INSTALL_PHOTO" = true ]; then
+    if [ -d "$USER_DIR/photogrammetry" ]; then
+        echo "Photogrammetry repository already exists. Pulling latest updates..."
+        cd "$USER_DIR/photogrammetry"
+        git pull
+    else
+        git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
+        mkdir "$USER_DIR/photogrammetry/logs"
+        sudo systemctl link /home/droneman/shell-scripts/system-services/photogram.service
+        sudo systemctl enable photogram.service
+    fi
+fi
 
 cd "$USER_DIR" 
 
 # Magnetometry setup
-# if [ -d "$USER_DIR/mavlink-mag-forwarder" ]; then
-#     echo "Mavlink Mag Forwarder repository already exists. Pulling latest updates..."
-#     cd "$USER_DIR/mavlink-mag-forwarder"
-#     git pull
-# else
-#     git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
-# fi
+if [ "$INSTALL_MAG" = true ]; then
+    if [ -d "$USER_DIR/mavlink-mag-forwarder" ]; then
+        echo "Mavlink Mag Forwarder repository already exists. Pulling latest updates..."
+        cd "$USER_DIR/mavlink-mag-forwarder"
+        git pull
+    else
+        git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
+        sudo systemctl link /home/droneman/shell-scripts/system-services/mavlink-mag-forwarder.service
+        sudo systemctl enable mavlink-mag-forwarder.service
+    fi
+fi
 
 cd "$USER_DIR" 
+
+# LiDAR setup
+if [ "$INSTALL_LIDAR" = true]; then
+    if [ -d "$USER_DIR/lidar-mapping" ]; then
+        echo "LiDAR repository already exists. Pulling latest updates..."
+        cd "$USER_DIR/lidar-mapping"
+        git pull
+    else
+        git clone git@bitbucket.org:overhead-intelligence/lidar-mapping.git
+        # sudo systemctl link /home/droneman/shell-scripts/system-services/lidar-mapping.service
+        # sudo systemctl enable lidar-mapping.service
+    fi
+fi
+
+cd "$USER_DIR"
+
+# CoT Broadcast setup
+if [ "$INSTALL_COT" = true]; then
+    sudo systemctl link /home/droneman/shell-scripts/system-services/cot-broadcast.service
+    sudo systemctl enable cot-broadcast.service
+fi
+
+cd "$USER_DIR"
+
+# QSPIN setup
+if [ "$INSTALL_QUSPIN" = true]; then
+    if [ -d "$USER_DIR/quspin-mag" ]; then
+        echo "QuSpin MAG repository already exists. Pulling latest updates..."
+        cd "$USER_DIR/quspin-mag"
+        git pull
+    else
+        git clone git@bitbucket.org:overhead-intelligence/quspin-mag.git
+        # sudo systemctl link /home/droneman/shell-scripts/system-services/quspin-mag.service
+        # sudo systemctl enable quspin-mag.service
+    fi
+fi
+
+# Time synchronization with INS setup
+if [ "$INSTALL_TIME" = true]; then
+    sudo systemctl link /home/droneman/shell-scripts/system-services/set-datetime.service
+    sudo systemctl enable set-datetime.service
+fi
 
 # mavlink router setup
 if [ -d "$USER_DIR/mavlink-router" ]; then
@@ -115,100 +203,6 @@ else
 fi
 
 cd "$USER_DIR"
-
-# Install mavlink forwarder dependencies
-sudo pip3 install pymavlink pyserial
-
-# create system services
-if systemctl list-unit-files | grep -q "set-datetime.service"; then
-    echo "set-datetime.service already exists. Ensuring it is enabled..."
-    sudo systemctl enable set-datetime.service
-else
-    echo "Creating set-datetime.service..."
-    sudo tee /etc/systemd/system/set-datetime.service > /dev/null <<EOL
-[Unit]
-Description=Set System Time from GPS Data
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/set-time.py
-RemainAfterExit=false
-Restart=no
-User=root
-
-[Install]
-WantedBy=multi-user.target
-EOL
-    sudo systemctl enable set-datetime.service
-fi
-
-if systemctl list-unit-files | grep -q "cot-broadcast.service"; then
-    echo "cot-broadcast.service already exists. Ensuring it is enabled..."
-    sudo systemctl enable cot-broadcast.service
-else
-    echo "Creating cot-broadcast.service..."
-    sudo tee /etc/systemd/system/cot-broadcast.service > /dev/null <<EOL
-[Unit]
-Description=CoT Data Broadcaster Auto-Start Service
-After=set-datetime.service
-
-[Service]
-Type=oneshot
-User=root
-ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/python3 /home/droneman/shell-scripts/tak/cot_broadcast.py
-
-[Install]
-WantedBy=multi-user.target
-EOL
-    sudo systemctl enable cot-broadcast.service
-fi
-
-# if systemctl list-unit-files | grep -q "photogram.service"; then
-#     echo "photogram.service already exists. Ensuring it is enabled..."
-#     sudo systemctl enable photogram.service
-# else
-#     echo "Creating photogram.service..."
-#     sudo tee /etc/systemd/system/photogram.service > /dev/null <<EOL
-# [Unit]
-# Description=Photogrammetry Auto-Start Service
-# After=set-datetime.service
-
-# [Service]
-# Type=oneshot
-# User=root
-# ExecStartPre=/bin/sleep 15
-# ExecStart=/home/droneman/photogrammetry/build/main
-
-# [Install]
-# WantedBy=multi-user.target
-# EOL
-#     sudo systemctl enable photogram.service
-# fi
-
-# if systemctl list-unit-files | grep -q "mavlink-forward.service"; then
-#     echo "mavlink-forward.service already exists. Ensuring it is enabled..."
-#     sudo systemctl enable mavlink-forward.service
-# else
-#     echo "Creating mavlink-forward.service..."
-#     sudo tee /etc/systemd/system/mavlink-forward.service > /dev/null <<EOL
-# [Unit]
-# Description=Auto-Start Mavlink to MagComp data stream
-# After=set-datetime.service
-
-# [Service]
-# User=droneman
-# Type=simple
-# ExecStartPre=/bin/sleep 15
-# ExecStart=/usr/bin/python3 /home/droneman/mavlink-mag-forwarder/mavlink-forward.py
-
-# [Install]
-# WantedBy=multi-user.target
-# EOL
-#     sudo systemctl disable mavlink-forward.service
-# fi
 
 # Stop and disable systemd-timesyncd.service
 if systemctl is-enabled systemd-timesyncd.service &>/dev/null; then
@@ -372,4 +366,3 @@ sudo usermod -aG tty droneman
 
 # Reboot to apply changes
 echo "Setup complete. Please reboot to apply changes..."
-#sudo reboot
