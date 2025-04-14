@@ -94,6 +94,9 @@ fi
 
 cd "$USER_DIR"
 
+# setup CoT Broadcaster
+sudo systemctl link /home/droneman/shell-scripts/system-services/cot-broadcast.service
+sudo systemctl enable cot-broadcast.service
 
 # Modify /boot/firmware/config.txt to enable UARTs and disable Bluetooth
 echo "Configuring /boot/firmware/config.txt..."
@@ -135,7 +138,7 @@ Mode = Server
 Address = 0.0.0.0
 Port = 10002
 RetryTimeout = 5
-[UdpEndpoint Internal3]
+[UdpEndpoint MAVLinkReader]
 Mode = Normal
 Address = 0.0.0.0
 Port = 10003
@@ -248,4 +251,3 @@ sudo usermod -aG tty droneman
 
 # Reboot to apply changes
 echo "Setup complete. Please reboot to apply changes..."
-#sudo reboot
