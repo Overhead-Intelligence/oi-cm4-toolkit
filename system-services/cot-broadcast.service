@@ -5,7 +5,7 @@ Description=CoT Data Broadcaster Auto-Start Service
 [Service]
 Type=oneshot
 User=root
-ExecStartPre=/bin/sleep 15
+ExecStartPre=/bin/sleep 45
 ExecStart=/usr/bin/python3 /home/droneman/oi-cm4-toolkit/tak/cot_broadcast.py
 
 [Install]
