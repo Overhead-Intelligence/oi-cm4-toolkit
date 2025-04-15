@@ -8,9 +8,9 @@ import subprocess
 # Configuration parameters:
 BROADCAST_IP = "255.255.255.255"  # Update this to your network's broadcast address
 PORT = 6969                   # Port that ATAK is listening on for CoT messages
-CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
 
 # Launch the mavlink-reader.py script
+CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
 mavlink_reader_script = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-reader.py"
 subprocess.Popen(["python3", mavlink_reader_script, "stream"])
 
@@ -24,6 +24,7 @@ def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goos
         altitude (float): Height above ellipsoid in meters.
         uid (str): Unique identifier for the source.
         callsign (str): Human-friendly name for the source.
+        type (str): Cursor type that designates what the icon looks like in ATAK.
     
     Returns:
         str: A CoT message in XML format.
@@ -31,11 +32,15 @@ def create_cot_message(lat, lon, altitude, uid="drone-1", callsign="Default Goos
     now = datetime.now(timezone.utc)
     time_str = now.isoformat() + "Z"
     start_str = time_str
-    stale_str = (now + timedelta(minutes=5)).isoformat() + "Z"
+    stale_str = (now + timedelta(minutes=2)).isoformat() + "Z"
     
     cot_message = f"""<?xml version="1.0" encoding="UTF-8"?>
-<event version="2.0" uid="{uid}" type="{type}" how="m-g" time="{time_str}" start="{start_str}" stale="{stale_str}">
-    <point lat="{lat}" lon="{lon}" hae="{altitude}" ce="9999.0" le="9999.0"/>
+<event version="2.0" 
+    uid="{uid}" 
+    type="{type}" 
+    how="m-g" 
+    time="{time_str}" start="{start_str}" stale="{stale_str}">
+    <point lat="{lat}" lon="{lon}" hae="{altitude}" ce="10.0" le="10.0"/>
     <detail>
         <contact callsign="{callsign}"/>
     </detail>
@@ -70,8 +75,8 @@ def main():
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     # Example position - replace these values with your telemetry data if available
-    #latitude = 27.7749
-    #longitude = -81.4194
+    #latitude = 27.95406643
+    #longitude = -81.61532840
     #altitude = 10.0
 
     hostname = socket.gethostname()
@@ -82,17 +87,26 @@ def main():
         while True:
             lat, lon, alt = read_csv_values() # Update location values from the CSV file
 
-            message = create_cot_message(lat, lon, alt, uid=uid, callsign=hostname, type="a-f-G-U-V-W")
+            # CoT type string: Hyphen-delimited identifier based on MIL-STD-2525 concepts.
+            # Common 'atoms' structure: 'a'-affiliation-dimension-function_code
+            #   - Affiliation: f=friendly, h=hostile, n=neutral, u=unknown
+            #   - Dimension: A=Air, G=Ground, S=Sea, P=Space
+            # Example: 
+            # 'a-f-A-C-F' -> Friendly Air Civilian Fixed-wing 
+            # 'a-f-G'-> Friendly Ground (e.g., vehicle, person, etc.)
+            # 'a-f-A-W' -> Friendly Air Missle
+            message = create_cot_message(lat, lon, alt, uid=uid, callsign=hostname, type="a-f-A-C")
+            
             
             try:
                 sock.sendto(message.encode('utf-8'), (BROADCAST_IP, PORT)) # Send the message via UDP broadcast
-            except:
+            except Exception as e:
                 print(f"Error sending message: {e}")
                 continue
 
-            #print("Broadcasted CoT message:")
-            #print(message)
-            #print("-" * 50)
+            print("Broadcasted CoT message:")
+            print(message)
+            print("-" * 50)
             # Wait a few seconds before sending the next message
             time.sleep(5)
     except KeyboardInterrupt:
