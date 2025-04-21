@@ -126,7 +126,7 @@ if [ "$INSTALL_PHOTO" = true ]; then
     else
         git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
         mkdir "$USER_DIR/photogrammetry/logs"
-        sudo systemctl link /home/droneman/shell-scripts/system-services/photogram.service
+        sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/photogram.service
         sudo systemctl enable photogram.service
     fi
 fi
@@ -141,7 +141,7 @@ if [ "$INSTALL_MAG" = true ]; then
         git pull
     else
         git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
-        sudo systemctl link /home/droneman/shell-scripts/system-services/mavlink-mag-forwarder.service
+        sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/mavlink-mag-forwarder.service
         sudo systemctl enable mavlink-mag-forwarder.service
     fi
 fi
@@ -156,7 +156,7 @@ if [ "$INSTALL_LIDAR" = true]; then
         git pull
     else
         git clone git@bitbucket.org:overhead-intelligence/lidar-mapping.git
-        # sudo systemctl link /home/droneman/shell-scripts/system-services/lidar-mapping.service
+        # sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/lidar-mapping.service
         # sudo systemctl enable lidar-mapping.service
     fi
 fi
@@ -165,7 +165,7 @@ cd "$USER_DIR"
 
 # CoT Broadcast setup
 if [ "$INSTALL_COT" = true]; then
-    sudo systemctl link /home/droneman/shell-scripts/system-services/cot-broadcast.service
+    sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/cot-broadcast.service
     sudo systemctl enable cot-broadcast.service
 fi
 
@@ -179,14 +179,14 @@ if [ "$INSTALL_QUSPIN" = true]; then
         git pull
     else
         git clone git@bitbucket.org:overhead-intelligence/quspin-mag.git
-        # sudo systemctl link /home/droneman/shell-scripts/system-services/quspin-mag.service
+        # sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/quspin-mag.service
         # sudo systemctl enable quspin-mag.service
     fi
 fi
 
 # Time synchronization with INS setup
 if [ "$INSTALL_TIME" = true]; then
-    sudo systemctl link /home/droneman/shell-scripts/system-services/set-datetime.service
+    sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/set-datetime.service
     sudo systemctl enable set-datetime.service
 
     # Stop and disable systemd-timesyncd.service
