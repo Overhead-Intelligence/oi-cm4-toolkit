@@ -36,7 +36,7 @@ class MySender(pytak.QueueWorker):
         await self.put_queue(data)
 
     async def run(self):
-        while True:
+        #while True:
             cot_event = gen_cot()
             self._logger.info("Sending CoT Event:\n%s\n", cot_event.decode())
             await self.handle_data(cot_event)
@@ -59,7 +59,7 @@ async def main():
     """Set up the configuration and start sender and receiver tasks."""
     config = ConfigParser()
     config["mycottool"] = {
-        "COT_URL": "tcp://takserver.example.com:8087"
+        "COT_URL": "tcp://10.224.5.255:8443"
     }
     conf = config["mycottool"]
 
