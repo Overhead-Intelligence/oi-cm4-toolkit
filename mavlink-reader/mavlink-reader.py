@@ -10,6 +10,8 @@ import os
 UDP_IP = "127.0.0.1"
 UDP_PORT = 10003
 
+DRONE_SYS_ID = 1 # The system ID of the drone we want to read data from, change this to match the drone's system ID
+
 class MavLinkData:
     def __init__(self):
         self.armed = False
@@ -315,16 +317,18 @@ def main():
             msg = reader.mav.recv_match(type=message_types, blocking=True, timeout=0.1)
             #msg = reader.mav.recv_msg()
 
-            if msg:
-                #print(msg)
-                current_time = time.time()
-                
-                data.update_data(msg) # Parse mavlink message and extract the data we want
-                
-                # Check if at least 1 seconds has passed since we last wrote to file
-                if (current_time - last_sent_time >= 1):
-                    data.write_to_csv()
-                    last_sent_time = current_time  # Update the last write time
+            # filter messages based on source system ID, we only want messages from this drone (DRONE_SYS_ID)
+            if not msg or msg.get_srcSystem() != DRONE_SYS_ID:
+                continue
+
+            #print(msg)
+            current_time = time.time()
+            data.update_data(msg) # Parse mavlink message and extract the data we want
+            
+            # Check if at least 1 seconds has passed since we last wrote to file
+            if (current_time - last_sent_time >= 1):
+                data.write_to_csv()
+                last_sent_time = current_time  # Update the last write time
             else:
                 time.sleep(0.05)
     
