@@ -11,7 +11,7 @@ def get_location():
     Returns (lat, lon, hae) in decimal degrees & meters.
     """
     # e.g. read from your CSV or GPS serial port
-    return 37.7749, -122.4194, 10.0
+    return 27.95391667, -81.61530556, 10.0
 
 async def send_location(writer, uid):
     """
@@ -28,16 +28,18 @@ async def send_location(writer, uid):
     )
     writer.write(cot)
     # If this is a stream writer, drain; if a datagram, this is a no-op
-    if hasattr(writer, "drain"):
-        await writer.drain()
+    # if hasattr(writer, "drain"):
+    #     await writer.drain()
 
 async def main():
     # --- 1. Build config pointing to your TAK server ---
     cfg = ConfigParser()
     cfg.add_section("tak")
+    
     # For UDP broadcast/multicast use udp://<host>:<port>
     # Change to tcp://<server>:<port> or tls://... as needed
-    cfg.set("tak", "COT_URL", "tcp://10.224.5.255:8443")
+    cfg.set("tak", "COT_URL", "tcp://10.224.5.255:8089")
+    
     # This host ID shows up in ATAK as the callsign/UID
     cfg.set("tak", "COT_HOST_ID", "cm4-client")
     conf = cfg["tak"]
