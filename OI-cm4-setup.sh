@@ -149,7 +149,7 @@ fi
 cd "$USER_DIR" 
 
 # LiDAR setup
-if [ "$INSTALL_LIDAR" = true]; then
+if [ "$INSTALL_LIDAR" = true ]; then
     if [ -d "$USER_DIR/lidar-mapping" ]; then
         echo "LiDAR repository already exists. Pulling latest updates..."
         cd "$USER_DIR/lidar-mapping"
@@ -164,7 +164,7 @@ fi
 cd "$USER_DIR"
 
 # CoT Broadcast setup
-if [ "$INSTALL_COT" = true]; then
+if [ "$INSTALL_COT" = true ]; then
     sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/cot-broadcast.service
     sudo systemctl enable cot-broadcast.service
 fi
@@ -172,7 +172,7 @@ fi
 cd "$USER_DIR"
 
 # QSPIN setup
-if [ "$INSTALL_QUSPIN" = true]; then
+if [ "$INSTALL_QUSPIN" = true ]; then
     if [ -d "$USER_DIR/quspin-mag" ]; then
         echo "QuSpin MAG repository already exists. Pulling latest updates..."
         cd "$USER_DIR/quspin-mag"
@@ -185,7 +185,7 @@ if [ "$INSTALL_QUSPIN" = true]; then
 fi
 
 # Time synchronization with INS setup
-if [ "$INSTALL_TIME" = true]; then
+if [ "$INSTALL_TIME" = true ]; then
     sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/set-datetime.service
     sudo systemctl enable set-datetime.service
 
