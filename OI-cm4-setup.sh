@@ -1,5 +1,26 @@
 #!/bin/bash
 
+### show_help: print script description and usage
+show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS]
+
+This script installs dependencies and configures the CM4 for OI products.
+
+Options:
+  photo        Install photogrammetry software
+  mag          Install mavlink forwarding for mag computer
+  lidar        Install LiDAR mapping software
+  cot          Install Cursor-on-Target broadcast
+  quspin       Install QuSpin magnetometer software
+  time         Install INS-based time synchronization
+  -h, --help   Show this help message and exit
+
+Example:
+  $0 photo mag time
+EOF
+}
+
 # Parse command line arguments for optional installations
 INSTALL_PHOTO=false
 INSTALL_MAG=false
@@ -10,6 +31,10 @@ INSTALL_TIME=false
 
 for arg in "$@"; do
     case $arg in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
         photo)
             INSTALL_PHOTO=true
             ;;
@@ -30,7 +55,7 @@ for arg in "$@"; do
             ;;
         *)
             echo "Unknown argument: $arg"
-            echo "Known arguments: photo, mag, lidar, cot, quspin, time."
+            echo "Try '$0 --help' for a list of valid options."
             exit 1
             ;;
     esac
@@ -78,11 +103,11 @@ for program in "${PROGRAMS[@]}"; do
         
         # python setup
         echo "Checking for Python external management removal..."
-        if [ -f /usr/lib/python3.11/EXTERNALLY-MANAGED.old ]; then           #python 3.11 for raspian OS, 3.12 for ubuntu
-            echo "Python external management already disabled. Skipping..."
-        else
+        if [ -f /usr/lib/python3.11/EXTERNALLY-MANAGED ]; then           #python 3.11 for raspian OS, 3.12 for ubuntu
             echo "Removing requirement for Python virtual environment..."
             sudo mv /usr/lib/python3.11/EXTERNALLY-MANAGED /usr/lib/python3.11/EXTERNALLY-MANAGED.old
+        else
+            echo "Python external management already disabled. Skipping..."
         fi
 
         pip3 install --upgrade pip
@@ -258,7 +283,7 @@ Mode = Normal
 Address = 0.0.0.0
 Port = 10003
 RetryTimeout = 5
-[UdpEndpoint MagForwarder]
+[UdpEndpoint MagCompForwarder]
 Mode = Normal
 Address = 0.0.0.0
 Port = 10004
