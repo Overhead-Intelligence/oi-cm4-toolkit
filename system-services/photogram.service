@@ -1,10 +1,10 @@
 [Unit]
-Description=Photogrammetry Auto-Start Service
+Description=Auto-Start Photogrammetry control software
 After=set-datetime.service
 
 [Service]
-Type=oneshot
 User=root
+Type=oneshot
 ExecStartPre=/bin/sleep 15
 ExecStart=/home/droneman/photogrammetry/build/main
 

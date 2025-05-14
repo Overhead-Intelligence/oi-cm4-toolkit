@@ -1,0 +1,12 @@
+[Unit]
+Description=Auto-Start QuSpin MAG logger
+After=set-datetime.service
+
+[Service]
+User=root
+Type=oneshot
+ExecStartPre=/bin/sleep 15
+ExecStart=/home/droneman/quspin-mag/build/main
+
+[Install]
+WantedBy=multi-user.target
