@@ -5,7 +5,7 @@ After=set-datetime.service
 [Service]
 User=root
 Type=oneshot
-ExecStartPre=/bin/sleep 15
+ExecStartPre=/bin/sleep 25
 ExecStart=/home/droneman/quspin-mag/build/main
 
 [Install]
