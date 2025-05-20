@@ -9,10 +9,11 @@ import uuid
 from typing import Optional, Tuple
 
 # Configuration settings
-SERVER_URL = "tls://45.32.196.115:8089" # vector server
-#SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
-UID        = "vector6"
-CALLSIGN   = "Vector6"
+#SERVER_URL = "tls://45.32.196.115:8089" # vector server
+SERVER_URL = "tls://tak.overheadintel.com:8089"   # OI google cloud server
+
+UID        = "magpie"
+CALLSIGN   = "Magpie"
 
 TEAM_COLOR = "Cyan"
 ROLE       = "Team Member"
@@ -27,9 +28,9 @@ def build_tls_conf():
     cfg = ConfigParser()
     cfg.add_section("tak")
     cfg.set("tak", "COT_URL", SERVER_URL)
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_cert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Magpie_cert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Magpie_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Magpie_ca_bundle.pem")
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
     return cfg["tak"]
@@ -263,7 +264,7 @@ async def async_main():
                 
                 #print(f"[INFO] Received CoT: {ET.tostring(ev, encoding='unicode')}")
 
-                # await asyncio.sleep(1)
+                #await asyncio.sleep(0.8)
 
                 # if ev.get("type") == "b-t-f":
                 #     # echo only free‐text chats
@@ -292,17 +293,17 @@ async def async_main():
                     if not text:
                         continue
 
-                    print(f"[INFO] Received CoT: {ET.tostring(root, encoding='unicode')}")
+                    #print(f"[INFO] Received CoT: {ET.tostring(root, encoding='unicode')}")
                     #print(f"[INFO] Received direct chat from {sender_uid} ({chat_id}): {text!r}")
 
                     # build a direct-to-that-sender echo, preserving routing
                     response = make_chat_direct(
                         original_ev=root,
-                        message_text=f"Echo: {text}"
+                        message_text=f"I heard: '{text}'"
                     )
                     # make_chat_direct already embeds the original __serverdestination,
                     # so this reply will go *only* to that device.
-                    print(f"[INFO] Sending direct chat back: {ET.tostring(ET.fromstring(response), encoding='unicode')}")
+                    #print(f"[INFO] Sending direct chat back: {ET.tostring(ET.fromstring(response), encoding='unicode')}")
                     tls_writer.write(response)
                     await tls_writer.drain()
 
