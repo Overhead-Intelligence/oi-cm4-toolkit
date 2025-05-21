@@ -278,8 +278,8 @@ Mode = Server
 Address = 0.0.0.0
 Port = 10002
 RetryTimeout = 5
-[UdpEndpoint MAVLinkReader]
-Mode = Normal
+[UdpEndpoint MAVROS]
+Mode = Server
 Address = 0.0.0.0
 Port = 10003
 RetryTimeout = 5
@@ -293,7 +293,7 @@ Mode = Normal
 Address = 0.0.0.0
 Port = 10005
 RetryTimeout = 5
-[UdpEndpoint Internal6]
+[UdpEndpoint MAVLinkReader]
 Mode = Normal
 Address = 0.0.0.0
 Port = 10006
