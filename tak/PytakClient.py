@@ -16,21 +16,26 @@ import struct
 import xml.etree.ElementTree as ET
 from configparser import ConfigParser
 import pytak
-from datetime import datetime
 from collections import defaultdict
 from cot_broadcast import read_csv_values
+import subprocess
 
 # Configuration settings
 HOSTNAME = socket.gethostname()
 SERVER_URL = "tls://10.224.5.255:8089"
+MCAST_ADDR = "224.10.10.1"
+MCAST_PORT = 17012
+
 #SERVER_URL = "atak.tfvector.com"
 UID        = f"{HOSTNAME}-UID"
 CALLSIGN   = HOSTNAME
 CHATROOM   = "All Chat Rooms"
-MCAST_ADDR = "224.10.10.1"
-MCAST_PORT = 17012
 TEAM_COLOR = "Cyan"
 ROLE       = "Team Member"
+
+CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
+mavlink_reader_script = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-reader.py"
+subprocess.Popen(["python3", mavlink_reader_script, "stream"])
 
 #USERNAME = "roger2"
 #PASSWORD = "atakatak1234!!"
@@ -48,38 +53,18 @@ def build_tls_conf():
     #cfg.set("tak", "COT_HOST_ID", UID)
     
     # paths to your cert/key/CA
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/Documents/tak/client_cert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/Documents/tak/client_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/Documents/tak/ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_clicert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_ca_bundle.pem")
     # for testing only or if needed
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
     return cfg["tak"]
 
-def make_heartbeat():
-    return pytak.gen_cot(
-        lat=0, lon=0, hae=0,
-        uid=UID,
-        cot_type="t-x-c-t"
-    )
 
-
-
-PRESENCE_LAT = 27.95
-PRESENCE_LON = -81.61
-MY_ENDPOINT = "10.224.3.140:4242:tcp"
+MY_ENDPOINT = "10.224.3.140:4242"
 MY_PHONE = 18633353998 # Dummy number not real
 
-# Dummy functions for testing details portion of pytak client
-def get_battery() -> int:
-    # read from your on-board sensor, or return a dummy value
-    return 42
-def get_speed() -> float:
-    # maybe you compute speed from GPS deltas
-    return 3.5
-def get_course() -> float:
-    # maybe you have a compass or heading from MAVLink
-    return 308.0
 
 def make_presence() -> bytes:
     """
@@ -99,15 +84,16 @@ def make_presence() -> bytes:
         #"access": "Undefined", 
     })
 
-    lat, lon, alt = read_csv_values() # Update location values from the CSV file
-    
+    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    #print(f"{lat}, {lon}, {alt}, {battery}, {heading}, {grnd_speed}")
+
     # 2) Point block
     ET.SubElement(ev, "point", {
         "lat": f"{lat}",
         "lon": f"{lon}",
         "hae": f"{alt}",
-        "ce":  "9999999",
-        "le":  "9999999",
+        "ce":  "10",
+        "le":  "10",
     })
 
     # 3) Detail block
@@ -124,7 +110,7 @@ def make_presence() -> bytes:
     ET.SubElement(det, "uid", {"Droid": CALLSIGN})
 
     # 3c) Group affiliation
-    grp = ET.SubElement(det, "__group", {
+    ET.SubElement(det, "__group", {
         "name": TEAM_COLOR,
         "role": ROLE
     })
@@ -136,7 +122,7 @@ def make_presence() -> bytes:
     })
 
     # 3e) Status (battery)
-    ET.SubElement(det, "status", {"battery": str(get_battery())})
+    ET.SubElement(det, "status", {"battery": str(int(battery))})
 
     # 3f) TAK-version info
     ET.SubElement(det, "takv", {
@@ -148,8 +134,8 @@ def make_presence() -> bytes:
 
     # 3g) Track (speed/course)
     ET.SubElement(det, "track", {
-        "speed":  f"{get_speed():.8f}",
-        "course": f"{get_course():.8f}"
+        "speed":  f"{grnd_speed}",
+        "course": f"{heading}"
     })
 
      # stub to enable “Start Chat”
@@ -161,16 +147,16 @@ def make_presence() -> bytes:
     return ET.tostring(ev)
 
 
-
-
 def make_chat(text):
+    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+
     now = pytak.cot_time()
     ev = ET.Element("event", {
         "version":"2.0", "type":"b-t-f", "uid":f"{UID}-{now}",
         "how":"h-g-i-g-o", "time":now, "start":now,
         "stale":pytak.cot_time(3600)
     })
-    ET.SubElement(ev, "point", {"lat":"27.4","lon":"-82.4","hae":"10","ce":"10","le":"10"})
+    ET.SubElement(ev, "point", {"lat":str(lat),"lon":str(lon),"hae":str(alt),"ce":"10","le":"10"})
     det = ET.SubElement(ev, "detail")
     ET.SubElement(det, "__chat", {
         "id": CHATROOM,
@@ -187,18 +173,9 @@ def make_chat(text):
     }).text = text
     return ET.tostring(ev)
 
-def collect_position(event):
-    uid = event["uid"]
-    all_positions[uid].append((event["time"], event["lat"], event["lon"], event["hae"]))
-
-def output_positions():
-    if not all_positions:
-        print("[POSITION] No positions recorded yet.")
-        return
-    print("[POSITION] Last known positions:")
-    for uid, pts in all_positions.items():
-        t, lat, lon, hae = pts[-1]      
-        print(f"{uid:20s} @ {t} : lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
+def collect_position(user):
+    uid = user["uid"]
+    all_positions[uid].append((user["callsign"], user["time"], user["lat"], user["lon"], user["hae"])) #, user["callsign"]
 
 async def process_events(tls_reader, udp_sock, tls_writer):
     """
@@ -256,17 +233,7 @@ async def process_events(tls_reader, udp_sock, tls_writer):
             except ET.ParseError:
                 continue
 
-            # — CoT position collector —
-            pt = root.find("point")
-            if pt is not None:
-                collect_position({
-                    "uid":  root.get("uid"),
-                    "time": root.get("time"),
-                    "lat":  float(pt.get("lat")),
-                    "lon":  float(pt.get("lon")),
-                    "hae":  float(pt.get("hae", 0)),
-                })
-
+            
             # — free‐text chat handler —
             if root.get("type") == "b-t-f":
                 det     = root.find("detail")
@@ -285,6 +252,24 @@ async def process_events(tls_reader, udp_sock, tls_writer):
                         udp_sock.sendto(pkt, (MCAST_ADDR, MCAST_PORT))
                     else:
                         print(f"\n[CHAT][{sender}] {remarks.text}")
+            else:
+                # — CoT position collector —
+                pt = root.find("point")
+                det = root.find("detail")
+                callsign = None
+                if det is not None:
+                    contact = det.find("contact")
+                    if contact is not None:
+                        callsign = contact.get("callsign")
+                if pt is not None:
+                    collect_position({
+                        "callsign": callsign,
+                        "uid":  root.get("uid"),
+                        "time": root.get("time"),
+                        "lat":  float(pt.get("lat", 0)),
+                        "lon":  float(pt.get("lon", 0)),
+                        "hae":  float(pt.get("hae", 0))
+                    })
 
 async def tcp_and_udp_chat():
     # — TLS setup —
@@ -299,8 +284,7 @@ async def tcp_and_udp_chat():
     #await tls_writer.drain()
 ##########################################################################################################
 
-    # send initial heartbeat & presence
-    tls_writer.write(make_heartbeat()); await tls_writer.drain()
+    # send initial presence
     tls_writer.write(make_presence());  await tls_writer.drain()
 
     # — UDP setup —
@@ -348,12 +332,13 @@ def make_position_report():
     Turn all_positions into one big newline-separated string
     and wrap it in a b-t-f event for chat.
     """
+
     if not all_positions:
         report = "[POSITION] no positions recorded yet."
     else:
         lines = []
-        for uid, pts in all_positions.items():
-            t, lat, lon, hae = pts[-1]
+        for uid, data in all_positions.items():
+            callsign, time, lat, lon, hae = data[-1]
             # 1) skip the “zero” or magic hae defaults
             if (lat == 0.0 and lon == 0.0) or hae in (0.0, 9999999.0):
                 continue
@@ -362,8 +347,9 @@ def make_position_report():
             if uid.startswith("GeoChat.") or uid == "takPong":
                 continue
             
-            lines.append(f"{uid}@{t}: lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
+            lines.append(f"{callsign} @ {time}: lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
         report = "\n".join(lines)
+    
 
     # now wrap it as a chat
     now = pytak.cot_time()

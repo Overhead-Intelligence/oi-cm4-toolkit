@@ -54,7 +54,7 @@ def read_csv_values():
     flight_mode,armed,battery,rangefinder_dst,agl,heading,ground_speed,air_speed,wind_dir,wind_speed,UTC_Date_Time,lat,lon
     Here we use the "lat", "lon", and "agl" columns.
     """
-    lat, lon, alt = 0.0, 0.0, 0.0  # Default values
+    
     try:
         with open(CSV_FILE, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -64,10 +64,13 @@ def read_csv_values():
                 lat = float(row.get("lat", 0.0))
                 lon = float(row.get("lon", 0.0))
                 alt = float(row.get("agl", 0.0))
+                battery = float(row.get("battery", 0.0))
+                grnd_speed = float(row.get("ground_speed", 0.0))
+                heading = float(row.get("heading", 0.0))
                 #print(f"Read from CSV: lat={lat}, lon={lon}, alt={alt}")
     except Exception as e:
         print(f"Error reading CSV: {e}")
-    return lat, lon, alt
+    return lat, lon, alt, battery, heading, grnd_speed
 
 def main():
     # Create a UDP socket configured for broadcasting
@@ -85,7 +88,7 @@ def main():
     print("Broadcasting CoT messages. Press Ctrl+C to stop.")
     try:
         while True:
-            lat, lon, alt = read_csv_values() # Update location values from the CSV file
+            lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
 
             # CoT type string: Hyphen-delimited identifier based on MIL-STD-2525 concepts.
             # Common 'atoms' structure: 'a'-affiliation-dimension-function_code
