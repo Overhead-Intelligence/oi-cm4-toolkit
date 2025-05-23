@@ -1,0 +1,14 @@
+[Unit]
+Description=MediaMTX RTSP Server
+After=network.target
+Wants=network.target
+
+[Service]
+ExecStart=/usr/local/bin/mediamtx /etc/mediamtx.yml
+Restart=always
+RestartSec=5
+User=root
+WorkingDirectory=/home/droneman/oi-cm4-toolkit
+
+[Install]
+WantedBy=multi-user.target
