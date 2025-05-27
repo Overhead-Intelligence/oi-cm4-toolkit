@@ -22,8 +22,8 @@ import subprocess
 
 # Configuration settings
 SERVER_URL = "tls://45.32.196.115:8089" # Hostname only for CLITool config
-UID        = "Pytak1"
-CALLSIGN   = "OI-Pytak1"
+UID        = "jupiter"
+CALLSIGN   = "Jupiter"
 CHATROOM   = "All Chat Rooms"
 MCAST_ADDR = "224.10.10.1"
 MCAST_PORT = 17012
@@ -79,8 +79,8 @@ def make_presence() -> bytes:
         #"access": "Undefined", 
     })
 
-    #lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
-    lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
+    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    #lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
     #print(f"{lat}, {lon}, {alt}, {battery}, {heading}, {grnd_speed}")
 
     # 2) Point block
@@ -144,9 +144,9 @@ def make_presence() -> bytes:
 
 
 def make_chat(text):
-    #lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
 
-    lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
+    #lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
 
     now = pytak.cot_time()
     ev = ET.Element("event", {
