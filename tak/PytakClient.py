@@ -21,15 +21,12 @@ from cot_broadcast import read_csv_values
 import subprocess
 
 # Configuration settings
-HOSTNAME = socket.gethostname()
-SERVER_URL = "tls://10.224.5.255:8089"
+SERVER_URL = "tls://45.32.196.115:8089" # Hostname only for CLITool config
+UID        = "Pytak1"
+CALLSIGN   = "OI-Pytak1"
+CHATROOM   = "All Chat Rooms"
 MCAST_ADDR = "224.10.10.1"
 MCAST_PORT = 17012
-
-#SERVER_URL = "atak.tfvector.com"
-UID        = f"{HOSTNAME}-UID"
-CALLSIGN   = HOSTNAME
-CHATROOM   = "All Chat Rooms"
 TEAM_COLOR = "Cyan"
 ROLE       = "Team Member"
 
@@ -37,8 +34,6 @@ CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
 mavlink_reader_script = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-reader.py"
 subprocess.Popen(["python3", mavlink_reader_script, "stream"])
 
-#USERNAME = "roger2"
-#PASSWORD = "atakatak1234!!"
 
 all_positions = defaultdict(list)
 
@@ -53,17 +48,17 @@ def build_tls_conf():
     #cfg.set("tak", "COT_HOST_ID", UID)
     
     # paths to your cert/key/CA
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_clicert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_cert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_ca_bundle.pem")
     # for testing only or if needed
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
     return cfg["tak"]
 
 
-MY_ENDPOINT = "10.224.3.140:4242"
-MY_PHONE = 18633353998 # Dummy number not real
+#MY_ENDPOINT = "10.224.3.140:4242"
+#MY_PHONE = 18633353998 # Dummy number not real
 
 
 def make_presence() -> bytes:
@@ -84,7 +79,8 @@ def make_presence() -> bytes:
         #"access": "Undefined", 
     })
 
-    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    #lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
     #print(f"{lat}, {lon}, {alt}, {battery}, {heading}, {grnd_speed}")
 
     # 2) Point block
@@ -148,7 +144,9 @@ def make_presence() -> bytes:
 
 
 def make_chat(text):
-    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    #lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+
+    lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
 
     now = pytak.cot_time()
     ev = ET.Element("event", {
@@ -276,13 +274,6 @@ async def tcp_and_udp_chat():
     conf = build_tls_conf()
     tls_reader, tls_writer = await pytak.protocol_factory(conf)
     print(f"TLS connected to {SERVER_URL}")
-
-####################################### TESTING LOGIN FOR VECTOR SEVER ###################################    
-    # This may or may not work???
-    #login = f"<login user='{USERNAME}' pass='{PASSWORD}'/>".encode("utf-8")
-    #tls_writer.write(login)
-    #await tls_writer.drain()
-##########################################################################################################
 
     # send initial presence
     tls_writer.write(make_presence());  await tls_writer.drain()
