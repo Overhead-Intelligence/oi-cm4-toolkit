@@ -6,12 +6,13 @@ import xml.etree.ElementTree as ET
 from configparser import ConfigParser
 import pytak
 from collections import defaultdict
+
+# custom module to read CSV values
 from cot_broadcast import read_csv_values
-import subprocess
 
 # Configuration settings
-#SERVER_URL = "tls://45.32.196.115:8089" # vector server
-SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
+SERVER_URL = "tls://45.32.196.115:8089" # vector server
+#SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
 UID        = "vector6"
 CALLSIGN   = "Vector6"
 CHATROOM   = "All Chat Rooms"
@@ -28,9 +29,9 @@ def build_tls_conf():
     cfg.set("tak", "COT_URL", SERVER_URL)
     
     # paths to your cert/key/CA
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_cert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_cert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak3_ca_bundle.pem")
     # for testing only or if needed
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
@@ -44,77 +45,31 @@ def make_presence() -> bytes:
     track, takv, etc.
     """
     now = pytak.cot_time()
-    ev = ET.Element("event", {
-        "version": "2.0",
-        "uid": UID,
-        "type": "a-f-A", 
-        "time": now,
-        "start": now,
-        "stale": pytak.cot_time(75),
-        "how": "h-e"
-    })
+    ev = ET.Element("event", {"version": "2.0", "uid": UID, "type": "a-f-A", "time": now, "start": now, "stale": pytak.cot_time(75), "how": "h-e"})
 
+    # grab location values from the CSV file
     lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
     #lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
     #print(f"{lat}, {lon}, {alt}, {battery}, {heading}, {grnd_speed}")
 
-    # 2) Point block
-    ET.SubElement(ev, "point", {
-        "lat": f"{lat}",
-        "lon": f"{lon}",
-        "hae": f"{alt}",
-        "ce":  "10",
-        "le":  "10",
-    })
+    # Point block
+    ET.SubElement(ev, "point", {"lat": f"{lat}", "lon": f"{lon}", "hae": f"{alt}", "ce":  "10", "le":  "10"})
 
-    # 3) Detail block
+    # Detail block
     det = ET.SubElement(ev, "detail")
+    ET.SubElement(det, "contact", {"callsign": CALLSIGN, "endpoint": "*:-1:stcp"}) # Contact info 
+    ET.SubElement(det, "uid", {"Droid": CALLSIGN}) # UID (optional extra metadata)
+    ET.SubElement(det, "__group", {"name": TEAM_COLOR, "role": ROLE}) # Group affiliation
+    ET.SubElement(det, "precisionlocation", {"geopointsrc": "USER", "altsrc":      "SRTM1"}) # Precision location (so ATAK can show the little accuracy circle)
+    ET.SubElement(det, "status", {"battery": str(int(battery))})     # Status (battery)
+    ET.SubElement(det, "takv", {"device": "PyTAK", "platform": "Python", "os": "Linux", "version": "1.0"}) # TAK-version info
+    ET.SubElement(det, "track", {"speed":  f"{grnd_speed}", "course": f"{heading}"})
 
-    # 3a) Contact info (Contacts tab)
-    ET.SubElement(det, "contact", {
-        "callsign": CALLSIGN,
-        "endpoint": "udp://224.10.10.1:17012" #MY_ENDPOINT
-        #"phone":    MY_PHONE,
-    })
-
-    # 3b) UID (optional extra metadata)
-    ET.SubElement(det, "uid", {"Droid": CALLSIGN})
-
-    # 3c) Group affiliation
-    ET.SubElement(det, "__group", {
-        "name": TEAM_COLOR,
-        "role": ROLE
-    })
-
-    # 3d) Precision location (so ATAK can show the little accuracy circle)
-    ET.SubElement(det, "precisionlocation", {
-        "geopointsrc": "USER",
-        "altsrc":      "SRTM1"
-    })
-
-    # 3e) Status (battery)
-    ET.SubElement(det, "status", {"battery": str(int(battery))})
-
-    # 3f) TAK-version info
-    ET.SubElement(det, "takv", {
-        "device":   "PyTAK",
-        "platform": "Python",
-        "os":       "Linux",
-        "version":  "1.0" #fix
-    })
-
-    # 3g) Track (speed/course)
-    ET.SubElement(det, "track", {
-        "speed":  f"{grnd_speed}",
-        "course": f"{heading}"
-    })
-
-     # stub to enable “Start Chat”
+    # stub to enable “Start Chat”
     ET.SubElement(det, "__chat")
     # *** advertise GeoChat connector ***
     conns = ET.SubElement(det, "connectors")
-    ET.SubElement(conns, "connector", type="Geo Chat", protocol="tcp", endpoint="10.224.3.140:4242")
-    
+    ET.SubElement(conns, "connector", {"type": "Geo Chat", "protocol": "stcp", "endpoint": "*:-1:stcp"})
     return ET.tostring(ev)
 
 
@@ -148,7 +103,56 @@ def make_chat(text):
 
 def collect_position(user):
     uid = user["uid"]
-    all_positions[uid].append((user["callsign"], user["time"], user["lat"], user["lon"], user["hae"])) #, user["callsign"]
+    all_positions[uid].append((user["callsign"], user["time"], user["lat"], user["lon"], user["hae"]))
+
+def make_position_report():
+    """
+    Turn all_positions into one big newline-separated string
+    and wrap it in a b-t-f event for chat.
+    """
+
+    if not all_positions:
+        report = "[POSITION] no positions recorded yet."
+    else:
+        lines = []
+        for uid, data in all_positions.items():
+            callsign, time, lat, lon, hae = data[-1]
+            # 1) skip the “zero” or magic hae defaults
+            if (lat == 0.0 and lon == 0.0) or hae in (0.0, 9999999.0):
+                continue
+
+            # 2) skip system UIDs
+            if uid.startswith("GeoChat.") or uid == "takPong":
+                continue
+            
+            lines.append(f"{callsign} @ {time}: lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
+        report = "\n".join(lines)
+    
+
+    # now wrap it as a chat
+    now = pytak.cot_time()
+    ev = ET.Element("event", {
+        "version":"2.0", "type":"b-t-f", "uid":f"{UID}-{now}",
+        "how":"h-g-i-g-o", "time":now, "start":now,
+        "stale": pytak.cot_time(3600)
+    })
+    ET.SubElement(ev, "point", {"lat":"0","lon":"0","hae":"0","ce":"0","le":"0"})
+    det = ET.SubElement(ev, "detail")
+    # group chat
+    ET.SubElement(det, "__chat", {
+        "id": CHATROOM,
+        "chatroom": CHATROOM,
+        "senderCallsign": CALLSIGN
+    })
+    ET.SubElement(det, "chatgrp", {"id": CHATROOM, "uid0": UID})
+    # put our report lines in remarks
+    remarks = ET.SubElement(det, "remarks", {
+        "source": CALLSIGN,
+        "to":     CHATROOM,
+        "time":   now
+    })
+    remarks.text = report
+    return ET.tostring(ev)
 
 async def process_events(tls_reader, udp_sock, tls_writer):
     """
@@ -244,7 +248,9 @@ async def process_events(tls_reader, udp_sock, tls_writer):
                         "hae":  float(pt.get("hae", 0))
                     })
 
+# main async function
 async def tcp_and_udp_chat():
+    
     # — TLS setup —
     conf = build_tls_conf()
     tls_reader, tls_writer = await pytak.protocol_factory(conf)
@@ -292,55 +298,6 @@ async def tcp_and_udp_chat():
         presence_loop(),
         input_loop(),
     )
-
-def make_position_report():
-    """
-    Turn all_positions into one big newline-separated string
-    and wrap it in a b-t-f event for chat.
-    """
-
-    if not all_positions:
-        report = "[POSITION] no positions recorded yet."
-    else:
-        lines = []
-        for uid, data in all_positions.items():
-            callsign, time, lat, lon, hae = data[-1]
-            # 1) skip the “zero” or magic hae defaults
-            if (lat == 0.0 and lon == 0.0) or hae in (0.0, 9999999.0):
-                continue
-
-            # 2) skip system UIDs
-            if uid.startswith("GeoChat.") or uid == "takPong":
-                continue
-            
-            lines.append(f"{callsign} @ {time}: lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
-        report = "\n".join(lines)
-    
-
-    # now wrap it as a chat
-    now = pytak.cot_time()
-    ev = ET.Element("event", {
-        "version":"2.0", "type":"b-t-f", "uid":f"{UID}-{now}",
-        "how":"h-g-i-g-o", "time":now, "start":now,
-        "stale": pytak.cot_time(3600)
-    })
-    ET.SubElement(ev, "point", {"lat":"0","lon":"0","hae":"0","ce":"0","le":"0"})
-    det = ET.SubElement(ev, "detail")
-    # group chat
-    ET.SubElement(det, "__chat", {
-        "id": CHATROOM,
-        "chatroom": CHATROOM,
-        "senderCallsign": CALLSIGN
-    })
-    ET.SubElement(det, "chatgrp", {"id": CHATROOM, "uid0": UID})
-    # put our report lines in remarks
-    remarks = ET.SubElement(det, "remarks", {
-        "source": CALLSIGN,
-        "to":     CHATROOM,
-        "time":   now
-    })
-    remarks.text = report
-    return ET.tostring(ev)
 
 
 ###### MAIN ########
