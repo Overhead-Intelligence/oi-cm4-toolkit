@@ -1,14 +1,3 @@
-##############################################################################################################################################
-##############################################################################################################################################
-#                                                                                                                                            #
-#       DO NOT EDIT     DO NOT EDIT       DO NOT EDIT         DO NOT EDIT         DO NOT EDIT          DO NOT EDIT         DO NOT EDIT       #
-#                                                                                                                                            #
-#       WORKING MODEL; DIRECTLY MESSAGE PYTAK CLIENT; RESPONDS IN GROUP CHAT WORKS FOR ALL CLIENT TYPES; FALL BACK TO ONLY IF NECESSARY       #
-#                                                                                                                                            #
-##############################################################################################################################################
-##############################################################################################################################################
-
-
 #!/usr/bin/env python3
 import asyncio
 import socket
@@ -21,19 +10,15 @@ from cot_broadcast import read_csv_values
 import subprocess
 
 # Configuration settings
-SERVER_URL = "tls://45.32.196.115:8089" # Hostname only for CLITool config
-UID        = "jupiter"
-CALLSIGN   = "Jupiter"
+#SERVER_URL = "tls://45.32.196.115:8089" # vector server
+SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
+UID        = "vector6"
+CALLSIGN   = "Vector6"
 CHATROOM   = "All Chat Rooms"
 MCAST_ADDR = "224.10.10.1"
 MCAST_PORT = 17012
 TEAM_COLOR = "Cyan"
 ROLE       = "Team Member"
-
-CSV_FILE = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-data.csv"
-mavlink_reader_script = "/home/droneman/oi-cm4-toolkit/mavlink-reader/mavlink-reader.py"
-subprocess.Popen(["python3", mavlink_reader_script, "stream"])
-
 
 all_positions = defaultdict(list)
 
@@ -42,23 +27,14 @@ def build_tls_conf():
     cfg.add_section("tak")
     cfg.set("tak", "COT_URL", SERVER_URL)
     
-    #cfg.set("tak",
-    #        "COT_URL",
-    #        f"tls://{SERVER_HOST}:{SERVER_PORT}")
-    #cfg.set("tak", "COT_HOST_ID", UID)
-    
     # paths to your cert/key/CA
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_cert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak1_ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_cert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/vector6_ca_bundle.pem")
     # for testing only or if needed
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
     return cfg["tak"]
-
-
-#MY_ENDPOINT = "10.224.3.140:4242"
-#MY_PHONE = 18633353998 # Dummy number not real
 
 
 def make_presence() -> bytes:
@@ -71,12 +47,11 @@ def make_presence() -> bytes:
     ev = ET.Element("event", {
         "version": "2.0",
         "uid": UID,
-        "type": "a-f-A",
+        "type": "a-f-A", 
         "time": now,
         "start": now,
         "stale": pytak.cot_time(75),
         "how": "h-e"
-        #"access": "Undefined", 
     })
 
     lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
