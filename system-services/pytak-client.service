@@ -1,11 +1,12 @@
 [Unit]
 Description=PyTak Client Auto-Start Service
-# After=set-datetime.service # may not need this line
+After=network.target
 
 [Service]
-Type=oneshot
 User=droneman
-ExecStartPre=/bin/sleep 45
+Restart=always
+RestartSec=5
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/python3 /home/droneman/oi-cm4-toolkit/tak/PytakClient.py
 
 [Install]
