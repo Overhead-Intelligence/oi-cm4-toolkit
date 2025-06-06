@@ -37,7 +37,8 @@ def main():
     try:
         while True:
             # Read up to 1024 bytes at a time
-            data = ser.read(1024)
+            data = ser.readline()
+            #if data and data.startswith(b'#'):
             if data:
                 # Attempt to decode data as UTF-8 text; replace invalid characters
                 try:
