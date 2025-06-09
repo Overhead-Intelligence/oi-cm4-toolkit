@@ -96,10 +96,6 @@ fi
 
 cd "$USER_DIR"
 
-# setup CoT Broadcaster
-sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/cot-broadcast.service
-sudo systemctl enable cot-broadcast.service
-
 # Modify /boot/firmware/config.txt to enable UARTs and disable Bluetooth
 echo "Configuring /boot/firmware/config.txt..."
 
