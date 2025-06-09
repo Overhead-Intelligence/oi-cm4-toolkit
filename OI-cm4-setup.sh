@@ -16,7 +16,7 @@ Options:
   photo      Install photogrammetry software
   mag        Install MAVLink→MAG forwarder
   lidar      Install LiDAR mapping software
-  cot        Enable CoT broadcast service
+  tak        Install PyTak client
   quspin     Install QuSpin magnetometer software
   time       Configure INS-based time synchronization
   -h, --help Show this help message and exit
@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
     photo)  INSTALL_PHOTO=true ;;  
     mag)    INSTALL_MAG=true ;;  
     lidar)  INSTALL_LIDAR=true ;;  
-    cot)    INSTALL_COT=true ;;  
+    tak)    INSTALL_TAK=true ;;  
     quspin) INSTALL_QSPIN=true ;;  
     time)   INSTALL_TIME=true ;;  
     *)
