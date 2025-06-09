@@ -10,7 +10,7 @@
 
 <a name="introduction"></a>
 ## Introduction 
-This README details the current features of OI CM4 Toolkit **Version 1.3.0**
+This README details the current features of OI CM4 Toolkit **Version 1.4.0**
 
 The purpose of this repository is to provide convenience scripts for debugging, setup, and management of firmware projects on the Raspberry Pi Compute Module.
 
@@ -30,16 +30,14 @@ For any questions or feedback, please contact the main developer of this project
 - Contact Email: jean@overheadintel.com
 
 ## Changelog
-### Latest Version [1.3.0] - 2025-04-14
+### Latest Version [1.4.0] - 2025-06-09
 
 #### New Features
-- Introduced `vendor-cm4-setup` script for a standard minimal installation.
-- Added TAK (Team Awareness Kit) scripts for Cursor-on-Target (CoT) broadcasting.
-- Developed a MAVLink reader/writer script for general CM4 firmware usage.
+- Added pytak-client that will connect the drone to the OI Google cloud TAK server.
+- Added video-server scripts for gimbal video forwarding.
 
 #### Updates and Changes
-- Relocated system services from `/etc/systemd/system/` to the `system-services` folder.
-- Moved `test-uart` and `cam-control` scripts to the `sensor-testing` folder.
-- Enhanced the `OI-cm4-setup` script with modular installation functionality.
+- Changed the source git repositories in `OI-cm4-setup` from Bitbucket to GitHub.
+- User can now provide a folder path as an argument to `mavlink-reader.py` to log the mavlink data stream to said file.
 
 For a complete history of changes, refer to the [CHANGELOG.md](CHANGELOG.md) file.
