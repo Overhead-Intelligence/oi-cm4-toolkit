@@ -1,6 +1,11 @@
 #!/bin/bash
+set -euo pipefail # exit script if an error occurs
+IFS=$'\n\t'
 
-### show_help: print script description and usage
+# OI CM4 Setup Script
+# Script to install dependencies and configure Raspberry Pi CM4
+
+# Usage
 show_help() {
   cat << EOF
 Usage: $0 [OPTIONS]
@@ -8,13 +13,13 @@ Usage: $0 [OPTIONS]
 This script installs dependencies and configures the CM4 for OI products.
 
 Options:
-  photo        Install photogrammetry software
-  mag          Install mavlink forwarding for mag computer
-  lidar        Install LiDAR mapping software
-  cot          Install Cursor-on-Target broadcast
-  quspin       Install QuSpin magnetometer software
-  time         Install INS-based time synchronization
-  -h, --help   Show this help message and exit
+  photo      Install photogrammetry software
+  mag        Install MAVLink→MAG forwarder
+  lidar      Install LiDAR mapping software
+  cot        Enable CoT broadcast service
+  quspin     Install QuSpin magnetometer software
+  time       Configure INS-based time synchronization
+  -h, --help Show this help message and exit
 
 Example:
   $0 photo mag time
@@ -25,49 +30,31 @@ EOF
 INSTALL_PHOTO=false
 INSTALL_MAG=false
 INSTALL_LIDAR=false
-INSTALL_COT=false
+INSTALL_TAK=false
 INSTALL_QSPIN=false
 INSTALL_TIME=false
 
-for arg in "$@"; do
-    case $arg in
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-        photo)
-            INSTALL_PHOTO=true
-            ;;
-        mag)
-            INSTALL_MAG=true
-            ;;
-        lidar)
-            INSTALL_LIDAR=true
-            ;;
-        cot)
-            INSTALL_COT=true
-            ;;
-        quspin)
-            INSTALL_QSPIN=true
-            ;;    
-        time)
-            INSTALL_TIME=true
-            ;;
-        *)
-            echo "Unknown argument: $arg"
-            echo "Try '$0 --help' for a list of valid options."
-            exit 1
-            ;;
-    esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help) show_help; exit 0 ;;  
+    photo)  INSTALL_PHOTO=true ;;  
+    mag)    INSTALL_MAG=true ;;  
+    lidar)  INSTALL_LIDAR=true ;;  
+    cot)    INSTALL_COT=true ;;  
+    quspin) INSTALL_QSPIN=true ;;  
+    time)   INSTALL_TIME=true ;;  
+    *)
+      echo "Unknown option: $1"
+      show_help
+      exit 1
+      ;;
+  esac
+  shift
 done
 
-# home directory
 USER_DIR="/home/droneman"
+SYSTEM_SERVICES="${USER_DIR}/oi-cm4-toolkit/system-services"
 
-# exit script if an error occurs
-set -e
-
-# Script to install dependencies and configure Raspberry Pi CM4
 echo "Starting system setup for CM4..."
 
 # ensure timezone is UTC
@@ -76,20 +63,10 @@ sudo timedatectl set-timezone UTC
 # Update the package list and upgrade existing packages
 sudo apt update && sudo apt upgrade -y
 
-# programs to install
-PROGRAMS=(
-    "git"
-    "meson"
-    "ninja-build"
-    "pkg-config"
-    "gcc"
-    "g++"
-    "systemd"
-    "python3-pip"
-)
+CORE_PKGS=(git meson ninja-build pkg-config gcc g++ python3-pip)
 
 echo "Installing Mavlink-Router dependencies..."
-for program in "${PROGRAMS[@]}"; do
+for program in "${CORE_PKGS[@]}"; do
     if ! dpkg-query -W -f='${Status}' "$program" 2>/dev/null | grep -q "install ok installed"; then
         echo "Installing $program..."
         sudo apt-get install -y $program
@@ -149,7 +126,7 @@ if [ "$INSTALL_PHOTO" = true ]; then
         cd "$USER_DIR/photogrammetry"
         git pull
     else
-        git clone git@bitbucket.org:overhead-intelligence/photogrammetry.git
+        git clone git@github.com:Overhead-Intelligence/photogrammetry.git
         mkdir "$USER_DIR/photogrammetry/logs"
         sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/photogram.service
         sudo systemctl enable photogram.service
@@ -165,7 +142,7 @@ if [ "$INSTALL_MAG" = true ]; then
         cd "$USER_DIR/mavlink-mag-forwarder"
         git pull
     else
-        git clone git@bitbucket.org:overhead-intelligence/mavlink-mag-forwarder.git
+        git clone git@github.com:Overhead-Intelligence/mavlink-mag-forwarder.git
         sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/mavlink-mag-forwarder.service
         sudo systemctl enable mavlink-mag-forwarder.service
     fi
@@ -175,26 +152,24 @@ cd "$USER_DIR"
 
 # LiDAR setup
 if [ "$INSTALL_LIDAR" = true ]; then
-    if [ -d "$USER_DIR/lidar-mapping" ]; then
+    if [ -d "$USER_DIR/lidar-logger" ]; then
         echo "LiDAR repository already exists. Pulling latest updates..."
-        cd "$USER_DIR/lidar-mapping"
+        cd "$USER_DIR/lidar-logger"
         git pull
     else
-        git clone git@bitbucket.org:overhead-intelligence/lidar-mapping.git
-        # sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/lidar-mapping.service
-        # sudo systemctl enable lidar-mapping.service
+        git clone git@github.com:Overhead-Intelligence/lidar-logger.git
+        # sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/lidar-logger.service
+        # sudo systemctl enable lidar-logger.service
     fi
 fi
 
 cd "$USER_DIR"
 
-# CoT Broadcast setup
-if [ "$INSTALL_COT" = true ]; then
-    sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/cot-broadcast.service
-    sudo systemctl enable cot-broadcast.service
+# PyTak client setup
+if [ "$INSTALL_TAK" = true ]; then
+    sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/pytak-client.service
+    sudo systemctl enable pytak-client.service
 fi
-
-cd "$USER_DIR"
 
 # QSPIN setup
 if [ "$INSTALL_QUSPIN" = true ]; then
@@ -203,7 +178,7 @@ if [ "$INSTALL_QUSPIN" = true ]; then
         cd "$USER_DIR/quspin-mag"
         git pull
     else
-        git clone git@bitbucket.org:overhead-intelligence/quspin-mag.git
+        git clone git@github.com:Overhead-Intelligence/quspin-mag.git
         # sudo systemctl link /home/droneman/oi-cm4-toolkit/system-services/quspin-mag.service
         # sudo systemctl enable quspin-mag.service
     fi
@@ -241,18 +216,13 @@ cd "$USER_DIR"
 # Modify /boot/firmware/config.txt to enable UARTs and disable Bluetooth
 echo "Configuring /boot/firmware/config.txt..."
 
-# Check if the lines already exist before adding them
-CONFIG_FILE="/boot/firmware/config.txt"
-if ! grep -q "dtoverlay=uart0" "$CONFIG_FILE"; then
-    echo "dtoverlay=uart0" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=uart2" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=uart3" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=uart5" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=disable-bt" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=disable-wifi" | sudo tee -a $CONFIG_FILE
-else
-    echo "UART and Bluetooth configurations already present in $CONFIG_FILE"
-fi
+
+# Enable additional UARTs & disable BT/Wi-Fi
+cfg="/boot/firmware/config.txt"
+for overlay in uart0 uart2 uart3 uart5 disable-bt disable-wifi; do
+  grep -q "dtoverlay=${overlay}" "$cfg" || \
+    echo "dtoverlay=${overlay}" | sudo tee -a "$cfg"
+done
 
 #mavlink router config file
 if [ -d "/etc/mavlink-router" ]; then
@@ -390,4 +360,4 @@ echo "Adding droneman user to tty group"
 sudo usermod -aG tty droneman
 
 # Reboot to apply changes
-echo "Setup complete. Please reboot to apply changes..."
+echo "Setup complete. Please reboot to apply changes."
