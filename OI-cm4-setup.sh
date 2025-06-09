@@ -172,7 +172,7 @@ if [ "$INSTALL_TAK" = true ]; then
 fi
 
 # QSPIN setup
-if [ "$INSTALL_QUSPIN" = true ]; then
+if [ "$INSTALL_QSPIN" = true ]; then
     if [ -d "$USER_DIR/quspin-mag" ]; then
         echo "QuSpin MAG repository already exists. Pulling latest updates..."
         cd "$USER_DIR/quspin-mag"
