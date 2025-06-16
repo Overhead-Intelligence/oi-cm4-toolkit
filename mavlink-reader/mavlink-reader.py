@@ -28,7 +28,7 @@ class MavLinkData:
         self.unix_time = 0.0
         self.lat = 0.0
         self.lon = 0.0
-        self.mavlink_log_filepath = None
+        self.mavlink_log_filepath = ""
     
     def update_data(self, msg, armed=None, rangefinder_dst=None, agl=None, battery=None, heading=None, flight_mode=None, wind_dir=None, wind_speed = None, wind_speed_z = None, ground_speed = None, air_speed = None, unix_time = None, lat=None, lon=None):
         """
@@ -186,7 +186,7 @@ def main():
         command = sys.argv[1].lower() #command
         port = UDP_PORT #default port
 
-    reader = MavLinkReader(port=port) # Create an instance of MavLinkReader with the specified port
+    reader = MavLinkReader(port=int(port)) # Create an instance of MavLinkReader with the specified port
     
 
     if command == "stream":
@@ -196,11 +196,11 @@ def main():
 
         while True:
             # read MAVLink messages
-            msg = reader.mav.recv_match(type=message_types, blocking=True, timeout=0.1)
+            msg = reader.mav.recv_match(type=message_types, blocking=True)
             #msg = reader.mav.recv_msg()
 
             # filter messages based on source system ID, we only want messages from this drone (DRONE_SYS_ID)
-            if not msg or msg.get_srcSystem() != DRONE_SYS_ID:
+            if not msg or msg.get_srcSystem != DRONE_SYS_ID:
                 continue
 
             #print(msg)
