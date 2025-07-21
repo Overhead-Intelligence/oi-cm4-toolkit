@@ -10,7 +10,7 @@ import os
 UDP_IP = "127.0.0.1"
 UDP_PORT = 10006
 
-DRONE_SYS_ID = 23 # The system ID of the drone we want to read data from, change this to match the drone's system ID
+DRONE_SYS_ID = 28 # The system ID of the drone we want to read data from, change this to match the drone's system ID
 
 class MavLinkData:
     def __init__(self):
