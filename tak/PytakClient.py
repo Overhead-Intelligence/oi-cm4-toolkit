@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 import asyncio
-import socket
-import struct
 import xml.etree.ElementTree as ET
 from configparser import ConfigParser
 import pytak
 from collections import defaultdict
 
+import sys
+sys.path.append('testing') 
+
 # custom module to read CSV values
 from cot_broadcast import read_csv_values
 
 # Configuration settings
-SERVER_URL = "tls://45.32.196.115:8089" # vector server
-#SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
-UID        = "vector5"
-CALLSIGN   = "Vector5"
+#SERVER_URL = "tls://45.32.196.115:8089" # vector server
+SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
+UID        = "magellan"
+CALLSIGN   = "Magellan"
 CHATROOM   = "All Chat Rooms"
 MCAST_ADDR = "224.10.10.1"
 MCAST_PORT = 17012
@@ -29,9 +30,9 @@ def build_tls_conf():
     cfg.set("tak", "COT_URL", SERVER_URL)
     
     # paths to your cert/key/CA
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak2_cert.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak2_key.pem")
-    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Pytak2_ca_bundle.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CERT", "/home/droneman/oi-cm4-toolkit/tak/certs/Magellan_cert.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_KEY",  "/home/droneman/oi-cm4-toolkit/tak/certs/Magellan_key.pem")
+    cfg.set("tak", "PYTAK_TLS_CLIENT_CAFILE", "/home/droneman/oi-cm4-toolkit/tak/certs/Magellan_ca_bundle.pem")
     # for testing only or if needed
     cfg.set("tak", "PYTAK_TLS_DONT_VERIFY",       "1")
     cfg.set("tak", "PYTAK_TLS_DONT_CHECK_HOSTNAME","1")
