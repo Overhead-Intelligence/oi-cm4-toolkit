@@ -1,0 +1,35 @@
+[Unit]
+Description=oi_mavlink_bridge (ROS2/MAVROS) container
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+
+# (Optional) pull latest image at boot
+#ExecStartPre=/usr/bin/docker pull overheadintel/oi_mavlink_bridge:drone
+
+# Clean up any previous instance (ignore errors with leading -)
+ExecStartPre=-/usr/bin/docker stop ROS2_TAK_bridge
+ExecStartPre=-/usr/bin/docker rm ROS2_TAK_bridge
+
+# Run the container
+ExecStart=/usr/bin/docker run \
+  --name ROS2_TAK_bridge \
+  --network=host \
+  --dns 1.1.1.1 --dns 8.8.8.8 \
+  --log-driver=journald \
+  -v /home/droneman/oi-ros2-ws/src/oi_mavlink_interface/config/mavros_params.yaml:/oi-ros2-ws/src/oi_mavlink_interface/config/mavros_params.yaml \
+  overheadintel/oi_mavlink_bridge:drone
+
+# Graceful stop
+ExecStop=/usr/bin/docker stop ROS2_TAK_bridge
+
+# If you want to run as a non-root user, uncomment and ensure that user is in the "docker" group:
+# User=droneman
+
+[Install]
+WantedBy=multi-user.target
