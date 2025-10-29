@@ -59,29 +59,6 @@ sudo pip3 install pymavlink pyserial
 # make sure we are in the correct directory
 cd "$USER_DIR"
 
-# WiringPi setup
-if [ -d "$USER_DIR/WiringPi" ]; then
-    echo "WiringPi repository already exists."
-else
-    git clone https://github.com/WiringPi/WiringPi.git
-    cd "$USER_DIR/WiringPi"                    # in WiringPi dir
-    ./build debian
-
-    deb_file=$(find debian-template -maxdepth 1 -type f -name "wiringpi_*_arm64.deb" | head -n 1) # Dynamically locate the generated deb file regardless of version.
-    if [ -z "$deb_file" ]; then
-        echo "Error: Could not find the WiringPi deb file in debian-template."
-        exit 1
-    fi
-
-    mv "$deb_file" .
-
-    deb_file_basename=$(basename "$deb_file") # Get the base name of the file (e.g. wiringpi_3.14_arm64.deb).
-    sudo apt install ./"$deb_file_basename" # install it
-fi
-
-
-cd "$USER_DIR" 
-
 # mavlink router setup
 if [ -d "$USER_DIR/mavlink-router" ]; then
     echo "Mavlink-router repository already exists. Skipping..."
@@ -107,7 +84,7 @@ if ! grep -q "dtoverlay=uart0" "$CONFIG_FILE"; then
     echo "dtoverlay=uart3" | sudo tee -a $CONFIG_FILE
     echo "dtoverlay=uart5" | sudo tee -a $CONFIG_FILE
     echo "dtoverlay=disable-bt" | sudo tee -a $CONFIG_FILE
-    echo "dtoverlay=disable-wifi" | sudo tee -a $CONFIG_FILE
+    #echo "dtoverlay=disable-wifi" | sudo tee -a $CONFIG_FILE
 else
     echo "UART and Bluetooth configurations already present in $CONFIG_FILE"
 fi
