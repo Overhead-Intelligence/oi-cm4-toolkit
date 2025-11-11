@@ -4,8 +4,10 @@ import xml.etree.ElementTree as ET
 from configparser import ConfigParser
 import pytak
 from collections import defaultdict
-
+import math
 import sys
+import uuid
+import random
 sys.path.append('testing') 
 
 # custom module to read CSV values
@@ -14,8 +16,12 @@ from cot_broadcast import read_csv_values
 # Configuration settings
 #SERVER_URL = "tls://45.32.196.115:8089" # vector server
 SERVER_URL = "tls://35.231.4.140:8089"   # OI google cloud server
-UID        = "magellan"
-CALLSIGN   = "Magellan"
+CALLSIGN   = "UAS_Test_Drone"
+rd = random.Random()
+rd.seed(CALLSIGN)
+#UID = str(uuid.UUID(int=rd.getrandbits(128), version=4)) #CALLSIGN + "-" + 
+UID        = "UAS_Test_Drone"
+
 CHATROOM   = "All Chat Rooms"
 MCAST_ADDR = "224.10.10.1"
 MCAST_PORT = 17012
@@ -40,214 +46,94 @@ def build_tls_conf():
 
 
 def make_presence() -> bytes:
-    """
-    Build an ATAK-compatible a-f-G-U-C (Unit Contact) CoT event,
-    which shows up under Contacts, has a GeoChat endpoint, status,
-    track, takv, etc.
-    """
     now = pytak.cot_time()
-    ev = ET.Element("event", {"version": "2.0", "uid": UID, "type": "a-f-A", "time": now, "start": now, "stale": pytak.cot_time(75), "how": "h-e"})
+    # ——— Use your real data later ———
+    # lat, lon, alt, battery, heading, speed, gimbal_az, gimbal_el = read_csv_values()
+    lat, lon, alt = 27.95, -81.62, 10
+    heading = 200.0        # Drone heading (degrees, 0 = North)
+    speed = 150.0          # m/s
+    gimbal_az = 30.0      # Camera azimuth offset from heading
+    gimbal_el = -25.0     # Camera elevation (negative = down)
+    fov = 60.0            # Horizontal FOV (degrees)
+    vfov = 38.0           # Vertical FOV
+    sensor_range = 2000   # Max range in meters
 
-    # grab location values from the CSV file
-    lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
-    #lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
-    #print(f"{lat}, {lon}, {alt}, {battery}, {heading}, {grnd_speed}")
+    ev = ET.Element("event", {
+        "version": "2.0",
+        "uid": UID,
+        "type": "a-f-A-M-F-Q",
+        "time": now,
+        "start": now,
+        "stale": pytak.cot_time(30),
+        "how": "m-g",
+        "access": "Undefined"
+    })
 
-    # Point block
-    ET.SubElement(ev, "point", {"lat": f"{lat}", "lon": f"{lon}", "hae": f"{alt}", "ce":  "10", "le":  "10"})
+    ET.SubElement(ev, "point", {
+        "lat": f"{lat:.6f}",
+        "lon": f"{lon:.6f}",
+        "hae": f"{alt}",
+        "ce": "10.0",
+        "le": "10.0"
+    })
 
-    # Detail block
     det = ET.SubElement(ev, "detail")
-    ET.SubElement(det, "contact", {"callsign": CALLSIGN, "endpoint": "*:-1:stcp"}) # Contact info 
-    ET.SubElement(det, "uid", {"Droid": CALLSIGN}) # UID (optional extra metadata)
-    ET.SubElement(det, "__group", {"name": TEAM_COLOR, "role": ROLE}) # Group affiliation
-    ET.SubElement(det, "precisionlocation", {"geopointsrc": "USER", "altsrc":      "SRTM1"}) # Precision location (so ATAK can show the little accuracy circle)
-    ET.SubElement(det, "status", {"battery": str(int(battery))})     # Status (battery)
-    ET.SubElement(det, "takv", {"device": "PyTAK", "platform": "Python", "os": "Linux", "version": "1.0"}) # TAK-version info
-    ET.SubElement(det, "track", {"speed":  f"{grnd_speed}", "course": f"{heading}"})
-
-    # stub to enable “Start Chat”
-    ET.SubElement(det, "__chat")
-    # *** advertise GeoChat connector ***
-    conns = ET.SubElement(det, "connectors")
-    ET.SubElement(conns, "connector", {"type": "Geo Chat", "protocol": "stcp", "endpoint": "*:-1:stcp"})
-    return ET.tostring(ev)
+    uastool = ET.SubElement(det, "_uastool")
+    uastool.set("extendedCot", "true")
+    uastool.set("activeRoute", "false")
 
 
-# def make_chat(text):
-#     lat, lon, alt, battery, heading, grnd_speed = read_csv_values() # Update location values from the CSV file
+    ET.SubElement(det, "track", {
+        "course": f"{heading:.2f}",
+        "speed": f"{speed:.2f}",
+        "slope": " 0.0"
+    })
+    # ——— SPATIAL: REQUIRED FOR WINTAK POINTER & CONE ———
+    spatial = ET.SubElement(det, "spatial")
+    ET.SubElement(spatial, "attitude", {
+        "roll": "0.0",
+        "pitch": "0.0",
+        "yaw": f"{heading:.2f}"
+    })
+    ET.SubElement(spatial, "spin", {
+        "roll": "0.0", "pitch": "0.0", "yaw": "0.0"
+    })
 
-#     #lat, lon, alt, battery, heading, grnd_speed = 27.95, -81.62, 10, 45, 102, 20
-
-#     now = pytak.cot_time()
-#     ev = ET.Element("event", {
-#         "version":"2.0", "type":"b-t-f", "uid":f"{UID}-{now}",
-#         "how":"h-g-i-g-o", "time":now, "start":now,
-#         "stale":pytak.cot_time(3600)
-#     })
-#     ET.SubElement(ev, "point", {"lat":str(lat),"lon":str(lon),"hae":str(alt),"ce":"10","le":"10"})
-#     det = ET.SubElement(ev, "detail")
-#     ET.SubElement(det, "__chat", {
-#         "id": CHATROOM,
-#         "chatroom": CHATROOM,
-#         "senderCallsign": CALLSIGN
-#     })
-#     ET.SubElement(det, "chatgrp", {"id": CHATROOM, "uid0": UID})
-#     ET.SubElement(det, "link", {"uid": UID, "type": "a-f-G", "relation": "p-p"})
-#     ET.SubElement(det, "hierarchy")
-#     ET.SubElement(det, "remarks", {
-#         "source": CALLSIGN,
-#         "to": CHATROOM,
-#         "time": now
-#     }).text = text
-#     return ET.tostring(ev)
-
-# def collect_position(user):
-#     uid = user["uid"]
-#     all_positions[uid].append((user["callsign"], user["time"], user["lat"], user["lon"], user["hae"]))
-
-# def make_position_report():
-#     """
-#     Turn all_positions into one big newline-separated string
-#     and wrap it in a b-t-f event for chat.
-#     """
-
-#     if not all_positions:
-#         report = "[POSITION] no positions recorded yet."
-#     else:
-#         lines = []
-#         for uid, data in all_positions.items():
-#             callsign, time, lat, lon, hae = data[-1]
-#             # 1) skip the “zero” or magic hae defaults
-#             if (lat == 0.0 and lon == 0.0) or hae in (0.0, 9999999.0):
-#                 continue
-
-#             # 2) skip system UIDs
-#             if uid.startswith("GeoChat.") or uid == "takPong":
-#                 continue
-            
-#             lines.append(f"{callsign} @ {time}: lat={lat:.6f}, lon={lon:.6f}, hae={hae}")
-#         report = "\n".join(lines)
     
+    sensor = ET.SubElement(det, "sensor", {
+        "azimuth": f"{heading:.2f}",
+        "elevation": f"{gimbal_el:.2f}",
+        "fov": f"{fov:.1f}",
+        "vfov": f"{vfov:.1f}",
+        "range": str(sensor_range),
+        "type": "r-e",           # r-e = remote electro-optical
+        "version": "0.6",
+        "north": "0.0",          # Optional, usually 0
+        "roll": "0.0"
+    })
+    # ——— STRAIGHT WHITE LINE (100m ahead) ———
+    line_length_deg = 0.0162  # ~100m at equator (adjust for latitude if needed)
+    line_angle_offset = 0.0
+    line_heading = (heading + line_angle_offset) % 360
 
-#     # now wrap it as a chat
-#     now = pytak.cot_time()
-#     ev = ET.Element("event", {
-#         "version":"2.0", "type":"b-t-f", "uid":f"{UID}-{now}",
-#         "how":"h-g-i-g-o", "time":now, "start":now,
-#         "stale": pytak.cot_time(3600)
-#     })
-#     ET.SubElement(ev, "point", {"lat":"0","lon":"0","hae":"0","ce":"0","le":"0"})
-#     det = ET.SubElement(ev, "detail")
-#     # group chat
-#     ET.SubElement(det, "__chat", {
-#         "id": CHATROOM,
-#         "chatroom": CHATROOM,
-#         "senderCallsign": CALLSIGN
-#     })
-#     ET.SubElement(det, "chatgrp", {"id": CHATROOM, "uid0": UID})
-#     # put our report lines in remarks
-#     remarks = ET.SubElement(det, "remarks", {
-#         "source": CALLSIGN,
-#         "to":     CHATROOM,
-#         "time":   now
-#     })
-#     remarks.text = report
-#     return ET.tostring(ev)
+    delta_lat = line_length_deg * math.cos(math.radians(line_heading))
+    delta_lon = line_length_deg * math.sin(math.radians(line_heading)) / math.cos(math.radians(lat))
+    end_lat = lat + delta_lat
+    end_lon = lon + delta_lon
 
-# async def process_events(tls_reader, udp_sock, tls_writer):
-#     """
-#     Single coroutine that reads from both:
-#       - tls_reader (async)
-#       - udp_sock  (sync, via run_in_executor)
-#     Splits into <event>…</event>, then:
-#       - if it's a CoT point, calls collect_position()
-#       - if it's a free-chat, handles “position” command or prints
-#     """
-#     loop = asyncio.get_event_loop()
-#     buf_tcp = b""
-#     buf_udp = b""
+    shape = ET.SubElement(det, "shape")
+    poly = ET.SubElement(shape, "polyline", {
+        "closed": "false",
+        "ownerUID": UID
+    })
+    ET.SubElement(poly, "vertex", {"lat": f"{lat:.6f}", "lon": f"{lon:.6f}"})
+    ET.SubElement(poly, "vertex", {"lat": f"{end_lat:.6f}", "lon": f"{end_lon:.6f}"})
 
-#     async def read_tcp():
-#         nonlocal buf_tcp
-#         data = await tls_reader.read(4096)
-#         if not data:
-#             return []
-#         buf_tcp += data
-#         parts = []
-#         while b"</event>" in buf_tcp:
-#             pkt, buf_tcp = buf_tcp.split(b"</event>", 1)
-#             parts.append(pkt + b"</event>")
-#         return parts
 
-#     def read_udp():
-#         nonlocal buf_udp
-#         data, _ = udp_sock.recvfrom(8192)
-#         buf_udp += data
-#         parts = []
-#         while b"</event>" in buf_udp:
-#             pkt, buf_udp = buf_udp.split(b"</event>", 1)
-#             parts.append(pkt + b"</event>")
-#         return parts
 
-#     while True:
-#         # Launch both reads in parallel
-#         tcp_task = asyncio.create_task(read_tcp())
-#         udp_task = loop.run_in_executor(None, read_udp)
-#         done, _ = await asyncio.wait(
-#             [tcp_task, udp_task], return_when=asyncio.FIRST_COMPLETED
-#         )
+    return ET.tostring(ev, encoding="utf-8")
 
-#         if tcp_task in done:
-#             udp_task.cancel()
-#             events = tcp_task.result()
-#         else:
-#             tcp_task.cancel()
-#             events = await udp_task
 
-#         for xml in events:
-#             try:
-#                 root = ET.fromstring(xml)
-#             except ET.ParseError:
-#                 continue
-
-            
-#             # — free‐text chat handler —
-#             if root.get("type") == "b-t-f":
-#                 det     = root.find("detail")
-#                 chatelt = det.find("__chat")  if det is not None else None
-#                 remarks = det.find("remarks") if det is not None else None
-#                 if chatelt is not None and remarks is not None:
-#                     sender = chatelt.get("senderCallsign")
-#                     text   = (remarks.text or "").strip().lower()
-#                     if text == "position":
-#                         print(f"\n[REQUEST] {sender} asked for positions, sending report…")
-#                         pkt = make_position_report()
-#                         # send over TLS (so ATAK clients see it)
-#                         tls_writer.write(pkt)
-#                         await tls_writer.drain()
-#                         # send over UDP (so WinTAK sees it)
-#                         udp_sock.sendto(pkt, (MCAST_ADDR, MCAST_PORT))
-#                     else:
-#                         print(f"\n[CHAT][{sender}] {remarks.text}")
-#             else:
-#                 # — CoT position collector —
-#                 pt = root.find("point")
-#                 det = root.find("detail")
-#                 callsign = None
-#                 if det is not None:
-#                     contact = det.find("contact")
-#                     if contact is not None:
-#                         callsign = contact.get("callsign")
-#                 if pt is not None:
-#                     collect_position({
-#                         "callsign": callsign,
-#                         "uid":  root.get("uid"),
-#                         "time": root.get("time"),
-#                         "lat":  float(pt.get("lat", 0)),
-#                         "lon":  float(pt.get("lon", 0)),
-#                         "hae":  float(pt.get("hae", 0))
-#                     })
 
 # main async function
 async def async_main():
@@ -260,16 +146,6 @@ async def async_main():
     # send initial presence
     tls_writer.write(make_presence());  await tls_writer.drain()
 
-    # — UDP setup —
-    # udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    # udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # udp_sock.bind(("", MCAST_PORT))
-    # udp_sock.setsockopt(
-    #    socket.IPPROTO_IP,
-    #     socket.IP_ADD_MEMBERSHIP,
-    #     struct.pack("4sl", socket.inet_aton(MCAST_ADDR), socket.INADDR_ANY)
-    # )
-    # print(f"UDP socket joined {MCAST_ADDR}:{MCAST_PORT}")
 
     # — keep presence alive —
     async def presence_loop():
